@@ -19,6 +19,10 @@
     const collectionStatsSearchApi = 'https://api-mainnet.magiceden.dev/collection_stats/search/bitcoin';
     const collectionStatsByIdApi = 'https://api-mainnet.magiceden.dev/collection_stats/stats?chain=bitcoin&collectionId=';
     const corsProxyBase = 'https://api.allorigins.win/raw?url=';
+    const ordProxyBases = [
+        'https://api.allorigins.win/raw?url=',
+        'https://corsproxy.io/?'
+    ];
 
     const collectionSupplyOverrides = {
         'blok-boyz': 1000,
@@ -151,6 +155,12 @@
         return `${corsProxyBase}${encodeURIComponent(url)}`;
     }
 
+    function buildJinaProxyUrl(url) {
+        const normalized = String(url || '').trim();
+        if (!normalized) return '';
+        return `https://r.jina.ai/http://${normalized.replace(/^https?:\/\//i, '')}`;
+    }
+
     function shouldUseOrdProxyFallback(endpoint) {
         const value = String(endpoint || '').trim();
         if (!value) return false;
@@ -172,9 +182,13 @@
     function buildOrdRequestUrls(endpoint) {
         const requestUrls = [endpoint];
         if (shouldUseOrdProxyFallback(endpoint)) {
-            requestUrls.push(buildProxiedUrl(endpoint));
+            ordProxyBases.forEach(proxyBase => {
+                requestUrls.push(`${proxyBase}${encodeURIComponent(endpoint)}`);
+            });
+            const jinaProxyUrl = buildJinaProxyUrl(endpoint);
+            if (jinaProxyUrl) requestUrls.push(jinaProxyUrl);
         }
-        return requestUrls;
+        return Array.from(new Set(requestUrls.filter(Boolean)));
     }
 
     function satsToBtc(value) {
@@ -575,6 +589,14 @@
             }
         }
 
+        if (
+            (requestLabel === 'address' || requestLabel === 'outputs')
+            && lastError
+            && /did not return json/i.test(String(lastError.message || ''))
+        ) {
+            return { inscriptions: [] };
+        }
+
         if (lastError && lastError instanceof Error && lastError.requestLabel) {
             throw lastError;
         }
@@ -643,7 +665,7 @@
                 || /did not return json/i.test(String(addressError?.message || ''))
             )
         )
-            || Boolean(!addressError && inscriptionIds.length === 0 && Array.isArray(payload?.outputs));
+            || Boolean(!addressError && inscriptionIds.length === 0);
 
         if (shouldTryOutputsFallback) {
             try {
