@@ -513,17 +513,6 @@ footer p {
     gap: 10px;
 }
 
-.gallery-flex-item {
-    position: relative;
-    display: inline-block;
-    overflow: visible;
-}
-
-.gallery-flex-item:hover,
-.gallery-flex-item:focus-within {
-    z-index: 3;
-}
-
 .gallery-flex-1 {
     justify-content: center;
     display: flex;
@@ -542,28 +531,6 @@ footer p {
 
 .gallery-flex-1 img {
     height: 60vh;
-}
-
-.gallery-flex-item:hover .download-button,
-.gallery-flex-item:focus-within .download-button {
-    opacity: 1;
-    visibility: visible;
-}
-
-.gallery-flex-item img:hover ~ .download-button {
-    opacity: 1;
-    visibility: visible;
-}
-
-.gallery-flex-item:hover .image-title,
-.gallery-flex-item:focus-within .image-title {
-    opacity: 1;
-    visibility: visible;
-}
-
-.gallery-flex-item img:hover ~ .image-title {
-    opacity: 1;
-    visibility: visible;
 }
 
 @media (max-width: 600px){
@@ -684,6 +651,23 @@ footer p {
     }
 }
 
+.animated-line {
+    position: absolute;
+    width: 2px;
+    height: 100vh;
+    background: linear-gradient(to bottom, rgba(215, 121, 7, 0), rgba(215, 121, 7, 0.8));
+    z-index: 1;
+    pointer-events: none;
+}
+
+@keyframes moveLine {
+    0% {
+        transform: translateX(0) translateY(0);
+    }
+    100% {
+        transform: translateX(100vw) translateY(100vh);
+    }
+}
 #gallery{
     text-align: center;
     margin-top: 50px;
@@ -868,11 +852,11 @@ button{
     gap: 8px;
     min-height: 32px;
     padding: 6px 12px;
-    margin: 0 auto;
+    margin: 0 auto 10px;
     border: 1px solid #D77907;
     border-radius: 5px;
     background: #000;
-    color: #f2c07f;
+    color: #D77907;
     font-family: 'Orbitron', sans-serif;
     font-size: 0.78em;
     text-transform: uppercase;
