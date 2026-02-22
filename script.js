@@ -493,6 +493,14 @@
         }
     }
 
+    function extractInscriptionIdsFromResponseText(responseText) {
+        const ids = new Set();
+        const normalizedText = String(responseText || '');
+        const matches = normalizedText.match(/[0-9a-f]{64}i\d+/ig) || [];
+        matches.forEach(match => ids.add(normalizeInscriptionId(match)));
+        return Array.from(ids);
+    }
+
     async function fetchOrdJsonOrThrow(endpoint, requestLabel) {
         const requestUrls = buildOrdRequestUrls(endpoint);
         let lastError = null;
@@ -543,13 +551,26 @@
                 continue;
             }
 
+            let responseText = '';
             try {
-                return await response.json();
+                responseText = await response.text();
             } catch (error) {
+                responseText = '';
+            }
+
+            try {
+                return JSON.parse(responseText);
+            } catch (error) {
+                const extractedIds = extractInscriptionIdsFromResponseText(responseText);
+                if ((requestLabel === 'address' || requestLabel === 'outputs') && extractedIds.length > 0) {
+                    return { inscriptions: extractedIds };
+                }
+
                 const requestError = new Error(`Ord node ${requestLabel} endpoint did not return JSON.`);
                 requestError.status = response.status;
                 requestError.endpoint = endpoint;
                 requestError.requestLabel = requestLabel;
+                requestError.responseText = responseText;
                 lastError = requestError;
             }
         }
@@ -615,7 +636,13 @@
             addressError = error;
         }
 
-        const shouldTryOutputsFallback = Boolean(addressError && Number(addressError.status) === 404)
+        const shouldTryOutputsFallback = Boolean(
+            addressError
+            && (
+                Number(addressError.status) === 404
+                || /did not return json/i.test(String(addressError?.message || ''))
+            )
+        )
             || Boolean(!addressError && inscriptionIds.length === 0 && Array.isArray(payload?.outputs));
 
         if (shouldTryOutputsFallback) {
