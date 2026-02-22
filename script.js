@@ -151,6 +151,32 @@
         return `${corsProxyBase}${encodeURIComponent(url)}`;
     }
 
+    function shouldUseOrdProxyFallback(endpoint) {
+        const value = String(endpoint || '').trim();
+        if (!value) return false;
+        if (value.startsWith(corsProxyBase)) return false;
+
+        if (typeof window === 'undefined' || !window.location) return false;
+
+        try {
+            const endpointUrl = new URL(value, window.location.href);
+            const pageUrl = window.location;
+            const isMixedContent = pageUrl.protocol === 'https:' && endpointUrl.protocol === 'http:';
+            const isCrossOrigin = endpointUrl.origin !== pageUrl.origin;
+            return isMixedContent || isCrossOrigin;
+        } catch (error) {
+            return false;
+        }
+    }
+
+    function buildOrdRequestUrls(endpoint) {
+        const requestUrls = [endpoint];
+        if (shouldUseOrdProxyFallback(endpoint)) {
+            requestUrls.push(buildProxiedUrl(endpoint));
+        }
+        return requestUrls;
+    }
+
     function satsToBtc(value) {
         const parsed = parseNumber(value);
         return parsed === null ? null : parsed / 100000000;
@@ -468,76 +494,83 @@
     }
 
     async function fetchOrdJsonOrThrow(endpoint, requestLabel) {
-        let response;
+        const requestUrls = buildOrdRequestUrls(endpoint);
+        let lastError = null;
 
-        try {
-            response = await fetch(endpoint, {
-                headers: { Accept: 'application/json' }
-            });
-        } catch (error) {
-            const requestError = new Error(`Could not reach ord node for ${requestLabel}. Check ord node URL and browser/network access.`);
-            requestError.status = 0;
-            requestError.endpoint = endpoint;
-            requestError.requestLabel = requestLabel;
-            throw requestError;
-        }
+        for (const requestUrl of requestUrls) {
+            let response;
 
-        if (!response.ok) {
-            let responseText = '';
             try {
-                responseText = await response.text();
+                response = await fetch(requestUrl, {
+                    headers: { Accept: 'application/json' }
+                });
             } catch (error) {
-                responseText = '';
+                lastError = error;
+                continue;
             }
 
-            const normalizedText = String(responseText || '').toLowerCase();
-            if (normalizedText.includes('index-addresses') || normalizedText.includes('address index')) {
-                const requestError = new Error('Ord node address index is not enabled. Start ord with --index-addresses.');
+            if (!response.ok) {
+                let responseText = '';
+                try {
+                    responseText = await response.text();
+                } catch (error) {
+                    responseText = '';
+                }
+
+                const normalizedText = String(responseText || '').toLowerCase();
+                let requestError;
+
+                if (normalizedText.includes('index-addresses') || normalizedText.includes('address index')) {
+                    requestError = new Error('Ord node address index is not enabled. Start ord with --index-addresses.');
+                } else if (response.status === 404 && normalizedText.includes('file not found')) {
+                    requestError = new Error('Ord node URL points to a static file server. Set ord node URL to your ord HTTP server (for example: http://127.0.0.1:80).');
+                } else if (response.status === 404 && requestLabel === 'address') {
+                    requestError = new Error('Ord node address endpoint was not found. Confirm ord node URL and ensure your ord version supports GET /address/<ADDRESS>.');
+                } else {
+                    const condensedText = String(responseText || '')
+                        .replace(/\s+/g, ' ')
+                        .trim()
+                        .slice(0, 180);
+                    const detail = condensedText ? ` ${condensedText}` : '';
+                    requestError = new Error(`Ord node ${requestLabel} request failed (${response.status}).${detail}`);
+                }
+
                 requestError.status = response.status;
                 requestError.endpoint = endpoint;
                 requestError.requestLabel = requestLabel;
                 requestError.responseText = responseText;
-                throw requestError;
-            }
-            if (response.status === 404 && normalizedText.includes('file not found')) {
-                const requestError = new Error('Ord node URL points to a static file server. Set ord node URL to your ord HTTP server (for example: http://127.0.0.1:80).');
-                requestError.status = response.status;
-                requestError.endpoint = endpoint;
-                requestError.requestLabel = requestLabel;
-                requestError.responseText = responseText;
-                throw requestError;
-            }
-            if (response.status === 404 && requestLabel === 'address') {
-                const requestError = new Error('Ord node address endpoint was not found. Confirm ord node URL and ensure your ord version supports GET /address/<ADDRESS>.');
-                requestError.status = response.status;
-                requestError.endpoint = endpoint;
-                requestError.requestLabel = requestLabel;
-                requestError.responseText = responseText;
-                throw requestError;
+                lastError = requestError;
+                continue;
             }
 
-            const condensedText = String(responseText || '')
-                .replace(/\s+/g, ' ')
-                .trim()
-                .slice(0, 180);
-            const detail = condensedText ? ` ${condensedText}` : '';
-            const requestError = new Error(`Ord node ${requestLabel} request failed (${response.status}).${detail}`);
-            requestError.status = response.status;
-            requestError.endpoint = endpoint;
-            requestError.requestLabel = requestLabel;
-            requestError.responseText = responseText;
-            throw requestError;
+            try {
+                return await response.json();
+            } catch (error) {
+                const requestError = new Error(`Ord node ${requestLabel} endpoint did not return JSON.`);
+                requestError.status = response.status;
+                requestError.endpoint = endpoint;
+                requestError.requestLabel = requestLabel;
+                lastError = requestError;
+            }
         }
 
-        try {
-            return await response.json();
-        } catch (error) {
-            const requestError = new Error(`Ord node ${requestLabel} endpoint did not return JSON.`);
-            requestError.status = response.status;
-            requestError.endpoint = endpoint;
-            requestError.requestLabel = requestLabel;
-            throw requestError;
+        if (lastError && lastError instanceof Error && lastError.requestLabel) {
+            throw lastError;
         }
+
+        const mixedContentHint = (
+            typeof window !== 'undefined'
+            && window.location?.protocol === 'https:'
+            && /^http:\/\//i.test(String(endpoint || '').trim())
+        )
+            ? ' This site is HTTPS, so direct HTTP ord-node calls may be blocked by the browser.'
+            : '';
+
+        const requestError = new Error(`Could not reach ord node for ${requestLabel}. Check ord node URL and browser/network access.${mixedContentHint}`);
+        requestError.status = 0;
+        requestError.endpoint = endpoint;
+        requestError.requestLabel = requestLabel;
+        throw requestError;
     }
 
     async function fetchOrdAddressPayload(address, ordNodeBase) {
@@ -552,13 +585,16 @@
             ];
 
             for (const probeEndpoint of probeEndpoints) {
-                try {
-                    const probeResponse = await fetch(probeEndpoint, { method: 'GET' });
-                    if (probeResponse.ok) {
-                        return { reachable: true, endpoint: probeEndpoint };
+                const probeUrls = buildOrdRequestUrls(probeEndpoint);
+                for (const probeUrl of probeUrls) {
+                    try {
+                        const probeResponse = await fetch(probeUrl, { method: 'GET' });
+                        if (probeResponse.ok) {
+                            return { reachable: true, endpoint: probeEndpoint };
+                        }
+                    } catch (error) {
+                        continue;
                     }
-                } catch (error) {
-                    continue;
                 }
             }
 

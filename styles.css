@@ -133,6 +133,10 @@ header h1 {
 .wallet-search-results {
     margin-top: 14px;
     text-align: center;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .wallet-result-collection + .wallet-result-collection {
@@ -143,7 +147,7 @@ header h1 {
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 100%;
+    width: min(100%, 1100px);
 }
 
 .wallet-result-title {
@@ -157,10 +161,11 @@ header h1 {
 }
 
 .wallet-results-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 150px));
-    gap: 12px;
+    display: flex;
+    flex-wrap: wrap;
     justify-content: center;
+    align-items: flex-start;
+    gap: 12px;
     width: 100%;
 }
 
