@@ -56,7 +56,7 @@ header h1 {
 
 .wallet-search-window {
     width: min(980px, calc(100% - 32px));
-    margin: 0 auto;
+    margin: auto;
     padding: 18px 20px;
     border: none;
     background: transparent;
@@ -137,10 +137,6 @@ header h1 {
     display: flex;
     flex-direction: column;
     align-items: center;
-}
-
-.wallet-result-collection + .wallet-result-collection {
-    margin-top: 16px;
 }
 
 .wallet-result-collection {
@@ -327,9 +323,8 @@ section {
 
 h2 {
     font-size: 2em;
-    animation: glow 1.5s infinite alternate;
-    font-style:oblique;
     text-decoration: underline;
+    color: white;
 }
 
 footer {
@@ -350,6 +345,55 @@ footer p {
     gap: 15px;
     justify-content: center;
     margin-bottom: 15px;
+}
+
+.gallery-grid--carousel {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: min(100%, 100vw);
+    margin-left: auto;
+    margin-right: auto;
+    overflow: visible;
+}
+
+.gallery-grid--carousel .gallery-carousel-row {
+    width: 100%;
+    overflow: hidden;
+    padding: 9px 0;
+}
+
+.gallery-grid--carousel .gallery-carousel-track {
+    --carousel-duration: 60s;
+    display: flex;
+    align-items: center;
+    width: max-content;
+    animation: galleryCarouselScroll var(--carousel-duration) linear infinite;
+    will-change: transform;
+}
+
+.gallery-grid--carousel .gallery-carousel-row--reverse .gallery-carousel-track {
+    animation-name: galleryCarouselScrollReverse;
+}
+
+.gallery-grid--carousel .gallery-carousel-row:hover .gallery-carousel-track,
+.gallery-grid--carousel .gallery-carousel-row:focus-within .gallery-carousel-track {
+    animation-play-state: paused;
+}
+
+.gallery-grid--carousel .gallery-carousel-segment {
+    display: flex;
+    gap: 15px;
+    padding-right: 15px;
+}
+
+.gallery-grid--carousel .gallery-item {
+    flex: 0 0 auto;
+}
+
+.gallery-grid--carousel .gallery-item:hover,
+.gallery-grid--carousel .gallery-item:focus-within {
+    z-index: 3;
 }
 
 .gallery-search-results {
@@ -469,6 +513,17 @@ footer p {
     gap: 10px;
 }
 
+.gallery-flex-item {
+    position: relative;
+    display: inline-block;
+    overflow: visible;
+}
+
+.gallery-flex-item:hover,
+.gallery-flex-item:focus-within {
+    z-index: 3;
+}
+
 .gallery-flex-1 {
     justify-content: center;
     display: flex;
@@ -487,6 +542,28 @@ footer p {
 
 .gallery-flex-1 img {
     height: 60vh;
+}
+
+.gallery-flex-item:hover .download-button,
+.gallery-flex-item:focus-within .download-button {
+    opacity: 1;
+    visibility: visible;
+}
+
+.gallery-flex-item img:hover ~ .download-button {
+    opacity: 1;
+    visibility: visible;
+}
+
+.gallery-flex-item:hover .image-title,
+.gallery-flex-item:focus-within .image-title {
+    opacity: 1;
+    visibility: visible;
+}
+
+.gallery-flex-item img:hover ~ .image-title {
+    opacity: 1;
+    visibility: visible;
 }
 
 @media (max-width: 600px){
@@ -543,6 +620,17 @@ footer p {
     .gallery-search-row .gallery-search {
         max-width: none;
     }
+    .trait-filter-window {
+        width: calc(100% - 20px);
+        padding: 10px;
+    }
+    .trait-filter-control {
+        flex: 1 1 140px;
+        min-width: 140px;
+    }
+    .trait-filter-select {
+        min-width: 0;
+    }
 }
 
 
@@ -578,23 +666,24 @@ footer p {
     }
 }
 
-.animated-line {
-    position: absolute;
-    width: 2px;
-    height: 100vh;
-    background: linear-gradient(to bottom, rgba(215, 121, 7, 0), rgba(215, 121, 7, 0.8));
-    z-index: 1;
-    pointer-events: none;
+@keyframes galleryCarouselScroll {
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(-50%);
+    }
 }
 
-@keyframes moveLine {
-    0% {
-        transform: translateX(0) translateY(0);
+@keyframes galleryCarouselScrollReverse {
+    from {
+        transform: translateX(-50%);
     }
-    100% {
-        transform: translateX(100vw) translateY(100vh);
+    to {
+        transform: translateX(0);
     }
 }
+
 #gallery{
     text-align: center;
     margin-top: 50px;
@@ -761,6 +850,96 @@ button{
 .gallery-search-slot--right {
     visibility: hidden;
 }
+
+.trait-filter-window {
+    width: min(980px, calc(100% - 32px));
+    margin: auto;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    box-sizing: border-box;
+}
+
+.trait-filter-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 32px;
+    padding: 6px 12px;
+    margin: 0 auto;
+    border: 1px solid #D77907;
+    border-radius: 5px;
+    background: #000;
+    color: #f2c07f;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.78em;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+}
+
+.trait-filter-toggle:hover,
+.trait-filter-toggle:focus-visible {
+    box-shadow: 0 0 10px #D77907;
+}
+
+.trait-filter-content {
+    margin-top: 10px;
+}
+
+.trait-filter-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+}
+
+.trait-filter-control {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    min-width: 170px;
+}
+
+.trait-filter-label {
+    font-size: 0.72em;
+    color: #f2c07f;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+}
+
+.trait-filter-select {
+    width: 100%;
+    min-width: 170px;
+    padding: 7px 10px;
+    box-sizing: border-box;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.84em;
+    color: #D77907;
+    background-color: #000;
+    border: 1px solid #D77907;
+    border-radius: 5px;
+    text-align: center;
+    outline: none;
+}
+
+.trait-filter-select:focus {
+    box-shadow: 0 0 10px #D77907;
+}
+
+.trait-filter-status {
+    margin: 10px 0 0;
+    font-size: 0.82em;
+    color: #f2c07f;
+}
+
+.trait-filter-status.is-error {
+    color: #ff6b6b;
+}
+
 iframe {
       width: 95%;
       height: 90vh;
@@ -774,3 +953,25 @@ iframe {
       height: 100vh;
     }
 
+@media (max-width: 600px) {
+    .trait-filter-window {
+        width: calc(100% - 20px);
+        padding: 10px;
+    }
+
+    .trait-filter-control {
+        flex: 1 1 140px;
+        min-width: 140px;
+    }
+
+    .trait-filter-select {
+        min-width: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .gallery-grid--carousel .gallery-carousel-track {
+        animation: none;
+        transform: none;
+    }
+}

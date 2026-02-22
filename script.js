@@ -1,21 +1,4 @@
 ﻿document.addEventListener("DOMContentLoaded", function() {
-  const numLines = 10;
-  const container = document.body;
-  
-  for (let i = 0; i < numLines; i++) {
-      let line = document.createElement('div');
-      line.className = 'animated-line';
-      container.appendChild(line);
-      animateLine(line, i * 2000);
-  }
-  
-  function animateLine(line, delay) {
-      setTimeout(() => {
-          line.style.top = `${Math.random() * 100}vh`;
-          line.style.left = `${Math.random() * 100}vw`;
-          line.style.animation = 'moveLine 5s linear infinite';
-      }, delay);
-  }
     const collectionStatsSearchApi = 'https://api-mainnet.magiceden.dev/collection_stats/search/bitcoin';
     const collectionStatsByIdApi = 'https://api-mainnet.magiceden.dev/collection_stats/stats?chain=bitcoin&collectionId=';
     const corsProxyBase = 'https://api.allorigins.win/raw?url=';
@@ -142,7 +125,9 @@
     function setStatus(statsWindow, message, isError) {
         const statsStatus = statsWindow.querySelector('.collection-stats-status');
         if (!statsStatus) return;
-        statsStatus.textContent = message;
+        const normalizedMessage = String(message || '').trim();
+        statsStatus.textContent = normalizedMessage;
+        statsStatus.hidden = normalizedMessage.length === 0;
         statsStatus.classList.toggle('is-error', Boolean(isError));
     }
 
@@ -363,7 +348,6 @@
 
             const frame = document.createElement('iframe');
             frame.className = 'wallet-blokchain-frame';
-            frame.loading = 'lazy';
             frame.src = './Blokchain/index_blokchain.html';
             frame.title = match.displayName || 'Blokchain Surveillance Preview';
             frame.tabIndex = -1;
@@ -373,7 +357,6 @@
             resultCard.appendChild(frameCrop);
         } else {
             image = document.createElement('img');
-            image.loading = 'lazy';
             image.src = match.imageSrc;
             image.alt = match.imageAlt || match.displayName;
             resultCard.appendChild(image);
@@ -954,26 +937,38 @@
         if (!rawStats || typeof rawStats !== 'object') return null;
         return {
             source: 'Magic Eden collection stats API',
-            floorPrice: rawStats.fp ?? rawStats.fpListingPrice,
-            volume24h: rawStats.vol,
-            totalVolume: rawStats.totalVol,
-            listedCount: rawStats.listedCount,
-            ownerCount: rawStats.ownerCount,
-            totalSupply: rawStats.totalSupply
+            floorPrice: rawStats.fp ?? rawStats.fpListingPrice ?? rawStats.floorPrice,
+            volume24h: rawStats.vol ?? rawStats.volume24h ?? rawStats.volume24hr,
+            totalVolume: rawStats.totalVol ?? rawStats.totalVolume ?? rawStats.volumeTotal,
+            listedCount: rawStats.listedCount ?? rawStats.listed,
+            ownerCount: rawStats.ownerCount ?? rawStats.owners,
+            totalSupply: rawStats.totalSupply ?? rawStats.supply
         };
     }
 
     function mapCollectionStatsById(rawStats) {
         if (!rawStats || typeof rawStats !== 'object') return null;
+        const statsPayload = rawStats?.stats && typeof rawStats.stats === 'object'
+            ? rawStats.stats
+            : rawStats;
 
         return {
             source: 'Magic Eden collection stats API',
-            floorPrice: rawStats.floorPrice?.native ?? satsToBtc(rawStats.floorPrice?.amount),
-            volume24h: satsToBtc(rawStats.volume24hr ?? rawStats.volume24h),
-            totalVolume: satsToBtc(rawStats.totalVol),
-            listedCount: rawStats.listedCount,
-            ownerCount: rawStats.ownerCount,
-            totalSupply: rawStats.tokenCount ?? rawStats.totalSupply ?? rawStats.supply
+            floorPrice: statsPayload.floorPrice?.native
+                ?? satsToBtc(statsPayload.floorPrice?.amount)
+                ?? statsPayload.fp
+                ?? statsPayload.fpListingPrice,
+            volume24h: satsToBtc(statsPayload.volume24hr ?? statsPayload.volume24h ?? statsPayload.vol24hSats)
+                ?? statsPayload.volume24hBtc
+                ?? statsPayload.vol
+                ?? statsPayload.volume24h,
+            totalVolume: satsToBtc(statsPayload.totalVol ?? statsPayload.totalVolumeSats)
+                ?? statsPayload.totalVolumeBtc
+                ?? statsPayload.totalVol
+                ?? statsPayload.totalVolume,
+            listedCount: statsPayload.listedCount ?? statsPayload.listed,
+            ownerCount: statsPayload.ownerCount ?? statsPayload.owners,
+            totalSupply: statsPayload.tokenCount ?? statsPayload.totalSupply ?? statsPayload.supply
         };
     }
 
@@ -1009,18 +1004,84 @@
         };
     }
 
-    function findCollectionStatsInPayload(searchPayload, collectionSymbol) {
+    function normalizeCollectionKey(value) {
+        return String(value || '')
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '');
+    }
+
+    function findCollectionStatsInPayload(searchPayload, collectionSymbol, collectionName) {
         if (!Array.isArray(searchPayload)) return null;
+
+        const normalizedSymbol = String(collectionSymbol || '').toLowerCase();
+        const normalizedName = String(collectionName || '').toLowerCase();
+        const normalizedSymbolKey = normalizeCollectionKey(normalizedSymbol);
+        const normalizedNameKey = normalizeCollectionKey(normalizedName);
+
+        const directMatch = searchPayload.find(item => {
+            const symbol = String(item?.collectionSymbol || item?.symbol || '').toLowerCase();
+            const collectionId = String(item?.collectionId || item?.id || '').toLowerCase();
+            return symbol === normalizedSymbol || collectionId === normalizedSymbol;
+        });
+        if (directMatch) return directMatch;
+
         return searchPayload.find(item => {
-            const symbol = String(item?.collectionSymbol || '').toLowerCase();
-            const collectionId = String(item?.collectionId || '').toLowerCase();
-            return symbol === collectionSymbol || collectionId === collectionSymbol;
+            const candidateKeys = [
+                item?.collectionSymbol,
+                item?.collectionId,
+                item?.symbol,
+                item?.id,
+                item?.name,
+                item?.collectionName,
+                item?.displayName
+            ]
+                .map(normalizeCollectionKey)
+                .filter(Boolean);
+
+            return candidateKeys.some(candidateKey => {
+                if (normalizedSymbolKey) {
+                    if (candidateKey === normalizedSymbolKey) return true;
+                    if (candidateKey.includes(normalizedSymbolKey) || normalizedSymbolKey.includes(candidateKey)) return true;
+                }
+                if (normalizedNameKey) {
+                    if (candidateKey === normalizedNameKey) return true;
+                    if (candidateKey.includes(normalizedNameKey) || normalizedNameKey.includes(candidateKey)) return true;
+                }
+                return false;
+            });
         }) || null;
     }
 
+    const collectionStatsRetryDelayMs = 30 * 1000;
+    const collectionStatsRetryTimers = new WeakMap();
+    const collectionStatsRefreshInProgress = new WeakSet();
+
+    function clearCollectionStatsRetry(statsWindow) {
+        const retryTimer = collectionStatsRetryTimers.get(statsWindow);
+        if (!retryTimer) return;
+        clearTimeout(retryTimer);
+        collectionStatsRetryTimers.delete(statsWindow);
+    }
+
+    function scheduleCollectionStatsRetry(statsWindow) {
+        if (!statsWindow || collectionStatsRetryTimers.has(statsWindow)) return;
+        const retryTimer = setTimeout(() => {
+            collectionStatsRetryTimers.delete(statsWindow);
+            void refreshCollectionStats(statsWindow, null);
+        }, collectionStatsRetryDelayMs);
+        collectionStatsRetryTimers.set(statsWindow, retryTimer);
+    }
+
     async function refreshCollectionStats(statsWindow, sharedSearchPayload) {
+        if (collectionStatsRefreshInProgress.has(statsWindow)) return;
+        collectionStatsRefreshInProgress.add(statsWindow);
+
         const collectionSymbol = String(statsWindow.dataset.collectionSymbol || '').trim().toLowerCase();
-        if (!collectionSymbol) return;
+        if (!collectionSymbol) {
+            collectionStatsRefreshInProgress.delete(statsWindow);
+            return;
+        }
+        const collectionName = String(statsWindow.dataset.collectionName || '').trim();
 
         const statsRefresh = statsWindow.querySelector('.collection-stats-refresh');
         const collectionStatsPageUrl = `https://magiceden.io/ordinals/marketplace/${collectionSymbol}`;
@@ -1049,7 +1110,7 @@
                 }
             }
 
-            const matchedStats = findCollectionStatsInPayload(searchPayload, collectionSymbol);
+            const matchedStats = findCollectionStatsInPayload(searchPayload, collectionSymbol, collectionName);
             if (!mappedStats && matchedStats) {
                 mappedStats = mapSearchStats(matchedStats);
             }
@@ -1075,14 +1136,21 @@
                 dateStyle: 'medium',
                 timeStyle: 'short'
             })}`);
-            setStatus(statsWindow, `Live data from ${mappedStats.source}`, false);
+            setStatus(statsWindow, '', false);
+            clearCollectionStatsRetry(statsWindow);
         } catch (error) {
             clearStats(statsWindow);
             setUpdated(statsWindow, 'Update failed');
-            setStatus(statsWindow, 'Unable to load collection stats right now.', true);
+            setStatus(
+                statsWindow,
+                `Unable to load collection stats right now. Retrying in ${Math.round(collectionStatsRetryDelayMs / 1000)} seconds...`,
+                true
+            );
+            scheduleCollectionStatsRetry(statsWindow);
             console.error(`Collection stats load failed (${collectionSymbol}):`, error);
         } finally {
             if (statsRefresh) statsRefresh.disabled = false;
+            collectionStatsRefreshInProgress.delete(statsWindow);
         }
     }
 
@@ -1131,20 +1199,162 @@
         };
 
         refreshAllCollectionStats();
-        setInterval(refreshAllCollectionStats, 5 * 60 * 1000);
+    }
+
+    const traitFilterCollectionSymbols = new Set(['blok-boyz', 'blok-space']);
+    const collectionMetadataPathBySymbol = new Map(
+        walletCollectionConfig.map(collection => [collection.symbol, collection.metadataPath])
+    );
+    const traitFilterDataPromiseBySymbol = new Map();
+
+    function normalizeCollectionId(value) {
+        const normalized = String(value || '').trim().toLowerCase();
+        if (/^\d+$/.test(normalized)) {
+            return String(parseInt(normalized, 10));
+        }
+        return normalized;
+    }
+
+    function normalizeTraitValue(value) {
+        return String(value || '')
+            .trim()
+            .toLowerCase()
+            .replace(/\s+/g, ' ');
+    }
+
+    function buildMetadataCollectionId(metadataEntry, entryIndex) {
+        const nameNumber = extractEditionNumber(metadataEntry?.meta?.name);
+        if (nameNumber) return normalizeCollectionId(nameNumber);
+
+        const inscriptionId = String(metadataEntry?.id || '').trim().toLowerCase();
+        const inscriptionMatch = inscriptionId.match(/i(\d+)$/);
+        if (inscriptionMatch && inscriptionMatch[1]) {
+            const parsedInscriptionIndex = Number.parseInt(inscriptionMatch[1], 10);
+            if (Number.isFinite(parsedInscriptionIndex)) {
+                return normalizeCollectionId(parsedInscriptionIndex + 1);
+            }
+        }
+
+        return normalizeCollectionId(entryIndex + 1);
+    }
+
+    function getCollectionIdFromImageElement(img) {
+        if (!img) return '';
+        const src = img.getAttribute('src') || '';
+        const imageName = src.split('/').pop() || '';
+        const collectionId = imageName.split('?')[0].replace(/\.[^.]+$/, '');
+        return normalizeCollectionId(collectionId);
+    }
+
+    async function loadTraitFilterData(collectionSymbol) {
+        const normalizedSymbol = String(collectionSymbol || '').trim().toLowerCase();
+        if (!traitFilterCollectionSymbols.has(normalizedSymbol)) {
+            throw new Error(`Trait filters are not configured for ${collectionSymbol || 'this collection'}.`);
+        }
+
+        if (!traitFilterDataPromiseBySymbol.has(normalizedSymbol)) {
+            const metadataPath = collectionMetadataPathBySymbol.get(normalizedSymbol);
+            if (!metadataPath) {
+                throw new Error(`Metadata file not found for ${normalizedSymbol}.`);
+            }
+
+            const traitDataPromise = fetchJsonWithFallback(metadataPath).then(metadataPayload => {
+                const metadataEntries = Array.isArray(metadataPayload) ? metadataPayload : [];
+                const traitsByCollectionId = new Map();
+                const traitTypeBuckets = new Map();
+
+                metadataEntries.forEach((entry, index) => {
+                    const collectionId = buildMetadataCollectionId(entry, index);
+                    if (!collectionId) return;
+
+                    const traitsForItem = new Map();
+                    const attributes = Array.isArray(entry?.meta?.attributes) ? entry.meta.attributes : [];
+
+                    attributes.forEach(attribute => {
+                        const traitTypeLabel = String(attribute?.trait_type || '').trim();
+                        const traitValueLabel = String(attribute?.value || '').trim();
+                        if (!traitTypeLabel || !traitValueLabel) return;
+
+                        const traitTypeKey = normalizeTraitValue(traitTypeLabel);
+                        const traitValueKey = normalizeTraitValue(traitValueLabel);
+                        if (!traitTypeKey || !traitValueKey) return;
+
+                        traitsForItem.set(traitTypeKey, traitValueKey);
+
+                        let traitTypeBucket = traitTypeBuckets.get(traitTypeKey);
+                        if (!traitTypeBucket) {
+                            traitTypeBucket = {
+                                key: traitTypeKey,
+                                label: traitTypeLabel,
+                                valuesByKey: new Map()
+                            };
+                            traitTypeBuckets.set(traitTypeKey, traitTypeBucket);
+                        }
+
+                        let valueBucket = traitTypeBucket.valuesByKey.get(traitValueKey);
+                        if (!valueBucket) {
+                            valueBucket = {
+                                key: traitValueKey,
+                                label: traitValueLabel,
+                                count: 0
+                            };
+                            traitTypeBucket.valuesByKey.set(traitValueKey, valueBucket);
+                        }
+
+                        valueBucket.count += 1;
+                    });
+
+                    traitsByCollectionId.set(collectionId, traitsForItem);
+                });
+
+                const traitTypes = Array.from(traitTypeBuckets.values())
+                    .map(traitType => {
+                        const values = Array.from(traitType.valuesByKey.values())
+                            .sort((a, b) => {
+                                if (b.count !== a.count) return b.count - a.count;
+                                return a.label.localeCompare(b.label, 'en', { sensitivity: 'base' });
+                            });
+
+                        return {
+                            key: traitType.key,
+                            label: traitType.label,
+                            values
+                        };
+                    })
+                    .sort((a, b) => a.label.localeCompare(b.label, 'en', { sensitivity: 'base' }));
+
+                return {
+                    traitsByCollectionId,
+                    traitTypes,
+                    itemCount: traitsByCollectionId.size
+                };
+            });
+
+            traitFilterDataPromiseBySymbol.set(normalizedSymbol, traitDataPromise);
+        }
+
+        try {
+            return await traitFilterDataPromiseBySymbol.get(normalizedSymbol);
+        } catch (error) {
+            traitFilterDataPromiseBySymbol.delete(normalizedSymbol);
+            throw error;
+        }
     }
 
     initializeWalletSearch();
 
     // Gallery-grid search: inject an <input> before each grid.
     // Matching results are moved below the search bar while searching.
-document.querySelectorAll('.gallery-grid').forEach(grid => {
+    let traitFilterWindowCounter = 0;
+
+    document.querySelectorAll('.gallery-grid').forEach(grid => {
         const input = document.createElement('input');
         input.type = 'text';
         input.placeholder = 'Search by Collection ID';
         input.className = 'gallery-search';
 
         const gridSymbol = String(grid.dataset.collectionSymbol || '').trim().toLowerCase();
+        const supportsTraitFilters = traitFilterCollectionSymbols.has(gridSymbol);
         const searchRow = document.createElement('div');
         searchRow.className = 'gallery-search-row';
         const searchLeftSlot = document.createElement('div');
@@ -1173,6 +1383,46 @@ document.querySelectorAll('.gallery-grid').forEach(grid => {
         searchRow.appendChild(searchLeftSlot);
         searchRow.appendChild(searchCenterSlot);
         searchRow.appendChild(searchRightSlot);
+
+        let traitFilterControlsNode = null;
+        let traitFilterStatusNode = null;
+        let traitFilterToggleNode = null;
+        let traitFilterContentNode = null;
+        let traitFilterData = null;
+        let traitFilterWindow = null;
+        let traitFilterIsExpanded = false;
+        const traitFilterSelectByType = new Map();
+
+        if (supportsTraitFilters) {
+            traitFilterWindow = document.createElement('div');
+            traitFilterWindow.className = 'trait-filter-window is-collapsed';
+
+            traitFilterWindowCounter += 1;
+            const contentNodeId = `trait-filter-content-${gridSymbol || 'collection'}-${traitFilterWindowCounter}`;
+
+            traitFilterToggleNode = document.createElement('button');
+            traitFilterToggleNode.type = 'button';
+            traitFilterToggleNode.className = 'trait-filter-toggle';
+            traitFilterToggleNode.setAttribute('aria-controls', contentNodeId);
+
+            traitFilterControlsNode = document.createElement('div');
+            traitFilterControlsNode.className = 'trait-filter-controls';
+
+            traitFilterStatusNode = document.createElement('p');
+            traitFilterStatusNode.className = 'trait-filter-status';
+            traitFilterStatusNode.textContent = 'Loading trait filters from metadata...';
+
+            traitFilterContentNode = document.createElement('div');
+            traitFilterContentNode.className = 'trait-filter-content';
+            traitFilterContentNode.id = contentNodeId;
+            traitFilterContentNode.appendChild(traitFilterControlsNode);
+            traitFilterContentNode.appendChild(traitFilterStatusNode);
+
+            traitFilterWindow.appendChild(traitFilterToggleNode);
+            traitFilterWindow.appendChild(traitFilterContentNode);
+            grid.parentNode.insertBefore(traitFilterWindow, grid);
+        }
+
         grid.parentNode.insertBefore(searchRow, grid);
 
         const resultsGrid = document.createElement('div');
@@ -1183,7 +1433,8 @@ document.querySelectorAll('.gallery-grid').forEach(grid => {
         if (gridSymbol) {
             const linkedStatsWindow = document.querySelector(`.collection-stats-window[data-collection-symbol="${gridSymbol}"]`);
             if (linkedStatsWindow) {
-                searchRow.insertAdjacentElement('beforebegin', linkedStatsWindow);
+                const statsAnchor = traitFilterWindow || searchRow;
+                statsAnchor.insertAdjacentElement('beforebegin', linkedStatsWindow);
                 linkedStatsWindow.classList.remove('collection-stats-window--hero');
             }
         }
@@ -1193,9 +1444,14 @@ document.querySelectorAll('.gallery-grid').forEach(grid => {
         let itemDisplayBeforeSearch = null;
 
         function getGalleryItems() {
-            const wrappedItems = Array.from(grid.querySelectorAll('.gallery-item'));
+            const wrappedItems = Array.from(grid.querySelectorAll('.gallery-item')).filter(item => {
+                return item.dataset.carouselClone !== 'true';
+            });
             if (wrappedItems.length > 0) return wrappedItems;
-            return Array.from(grid.querySelectorAll('img'));
+            return Array.from(grid.querySelectorAll('img')).filter(img => {
+                const wrapped = img.closest('.gallery-item');
+                return !wrapped || wrapped.dataset.carouselClone !== 'true';
+            });
         }
 
         function ensureOriginalItems() {
@@ -1210,21 +1466,80 @@ document.querySelectorAll('.gallery-grid').forEach(grid => {
             return item.querySelector('img');
         }
 
-        function normalizeCollectionId(value) {
-            const normalized = String(value || '').trim().toLowerCase();
-            if (/^\d+$/.test(normalized)) {
-                return String(parseInt(normalized, 10));
+        function setTraitFilterWindowExpanded(expanded) {
+            if (!supportsTraitFilters || !traitFilterWindow || !traitFilterToggleNode || !traitFilterContentNode) return;
+
+            traitFilterIsExpanded = Boolean(expanded);
+            traitFilterWindow.classList.toggle('is-collapsed', !traitFilterIsExpanded);
+            traitFilterToggleNode.setAttribute('aria-expanded', String(traitFilterIsExpanded));
+            traitFilterToggleNode.textContent = traitFilterIsExpanded ? 'Hide Trait Filters' : 'Show Trait Filters';
+            traitFilterContentNode.hidden = !traitFilterIsExpanded;
+        }
+
+        function setTraitFilterStatus(message, isError) {
+            if (!traitFilterStatusNode) return;
+            traitFilterStatusNode.textContent = message;
+            traitFilterStatusNode.classList.toggle('is-error', Boolean(isError));
+            if (isError) setTraitFilterWindowExpanded(true);
+        }
+
+        function getActiveTraitFilters() {
+            const activeFilters = [];
+            traitFilterSelectByType.forEach((selectNode, traitTypeKey) => {
+                const selectedValue = normalizeTraitValue(selectNode.value);
+                if (!selectedValue) return;
+                activeFilters.push({
+                    traitTypeKey,
+                    traitValueKey: selectedValue
+                });
+            });
+            return activeFilters;
+        }
+
+        function updateTraitFilterStatus(matchCount, totalCount, activeTraitFilters, hasIdQuery) {
+            if (!supportsTraitFilters || !traitFilterData) return;
+
+            if (activeTraitFilters.length === 0 && !hasIdQuery) {
+                setTraitFilterStatus('', false);
+                return;
             }
-            return normalized;
+
+            const activeFilterLabels = [];
+            if (activeTraitFilters.length > 0) {
+                const suffix = activeTraitFilters.length === 1 ? '' : 's';
+                activeFilterLabels.push(`${activeTraitFilters.length} trait filter${suffix}`);
+            }
+            if (hasIdQuery) activeFilterLabels.push('Collection ID');
+            const filterDetail = activeFilterLabels.length > 0 ? ` using ${activeFilterLabels.join(' + ')}` : '';
+
+            setTraitFilterStatus(
+                `Showing ${matchCount.toLocaleString('en-US')} of ${totalCount.toLocaleString('en-US')} items${filterDetail}.`,
+                false
+            );
         }
 
         function itemMatchesQuery(item, normalizedQuery) {
             const img = getImageFromItem(item);
             if (!img) return false;
-            const src = img.getAttribute('src') || '';
-            const name = src.split('/').pop().toLowerCase();
-            const collectionId = name.split('?')[0].replace(/\.[^.]+$/, '');
-            return normalizeCollectionId(collectionId) === normalizedQuery;
+            return getCollectionIdFromImageElement(img) === normalizedQuery;
+        }
+
+        function itemMatchesTraitFilters(item, activeTraitFilters) {
+            if (activeTraitFilters.length === 0) return true;
+            if (!traitFilterData) return false;
+
+            const img = getImageFromItem(item);
+            if (!img) return false;
+
+            const collectionId = getCollectionIdFromImageElement(img);
+            if (!collectionId) return false;
+
+            const metadataTraits = traitFilterData.traitsByCollectionId.get(collectionId);
+            if (!metadataTraits) return false;
+
+            return activeTraitFilters.every(filter => {
+                return metadataTraits.get(filter.traitTypeKey) === filter.traitValueKey;
+            });
         }
 
         function getLoadMoreButton() {
@@ -1261,13 +1576,18 @@ document.querySelectorAll('.gallery-grid').forEach(grid => {
             itemDisplayBeforeSearch = null;
         }
 
-        input.addEventListener('input', () => {
+        function applyGalleryFilters() {
             const q = input.value.trim().toLowerCase();
-            if (!q) {
+            const normalizedQuery = normalizeCollectionId(q);
+            const activeTraitFilters = getActiveTraitFilters();
+            const hasIdQuery = Boolean(normalizedQuery);
+            const hasTraitFilters = activeTraitFilters.length > 0;
+
+            if (!hasIdQuery && !hasTraitFilters) {
                 restoreOriginalGrid();
+                updateTraitFilterStatus(0, originalItems ? originalItems.length : 0, activeTraitFilters, false);
                 return;
             }
-            const normalizedQuery = normalizeCollectionId(q);
 
             ensureOriginalItems();
             const fragment = document.createDocumentFragment();
@@ -1279,10 +1599,14 @@ document.querySelectorAll('.gallery-grid').forEach(grid => {
                 });
             }
 
+            let matchCount = 0;
             originalItems.forEach(item => {
-                if (itemMatchesQuery(item, normalizedQuery)) {
+                const matchesCollectionId = !hasIdQuery || itemMatchesQuery(item, normalizedQuery);
+                const matchesTraits = !hasTraitFilters || itemMatchesTraitFilters(item, activeTraitFilters);
+                if (matchesCollectionId && matchesTraits) {
                     item.style.display = '';
                     fragment.appendChild(item);
+                    matchCount += 1;
                 }
             });
 
@@ -1297,7 +1621,69 @@ document.querySelectorAll('.gallery-grid').forEach(grid => {
                 }
                 loadMoreBtn.style.display = 'none';
             }
-        });
+
+            updateTraitFilterStatus(matchCount, originalItems.length, activeTraitFilters, hasIdQuery);
+        }
+
+        function buildTraitFilterControls(loadedTraitData) {
+            if (!supportsTraitFilters || !traitFilterControlsNode) return;
+
+            traitFilterData = loadedTraitData;
+            traitFilterSelectByType.clear();
+            traitFilterControlsNode.replaceChildren();
+
+            loadedTraitData.traitTypes.forEach(traitType => {
+                const traitControl = document.createElement('label');
+                traitControl.className = 'trait-filter-control';
+
+                const traitLabel = document.createElement('span');
+                traitLabel.className = 'trait-filter-label';
+                traitLabel.textContent = traitType.label;
+
+                const traitSelect = document.createElement('select');
+                traitSelect.className = 'trait-filter-select';
+                traitSelect.setAttribute('data-trait-type', traitType.key);
+
+                const anyOption = document.createElement('option');
+                anyOption.value = '';
+                anyOption.textContent = `Any ${traitType.label}`;
+                traitSelect.appendChild(anyOption);
+
+                traitType.values.forEach(traitValue => {
+                    const option = document.createElement('option');
+                    option.value = traitValue.key;
+                    option.textContent = `${traitValue.label} (${traitValue.count})`;
+                    traitSelect.appendChild(option);
+                });
+
+                traitSelect.addEventListener('change', applyGalleryFilters);
+                traitFilterSelectByType.set(traitType.key, traitSelect);
+
+                traitControl.appendChild(traitLabel);
+                traitControl.appendChild(traitSelect);
+                traitFilterControlsNode.appendChild(traitControl);
+            });
+            setTraitFilterStatus('', false);
+        }
+
+        input.addEventListener('input', applyGalleryFilters);
+
+        if (supportsTraitFilters) {
+            traitFilterToggleNode.addEventListener('click', () => {
+                setTraitFilterWindowExpanded(!traitFilterIsExpanded);
+            });
+            setTraitFilterWindowExpanded(false);
+
+            loadTraitFilterData(gridSymbol)
+                .then(loadedTraitData => {
+                    buildTraitFilterControls(loadedTraitData);
+                    applyGalleryFilters();
+                })
+                .catch(error => {
+                    setTraitFilterStatus('Trait filters are unavailable right now.', true);
+                    console.error(`Trait filter load failed (${gridSymbol}):`, error);
+                });
+        }
     });
 
     // Some collections use non-grid layouts (iframe/flex). Keep the marketplace
