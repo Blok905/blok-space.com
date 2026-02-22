@@ -693,12 +693,49 @@
         const imageLookup = buildCollectionImageLookup(collection);
         const byInscriptionId = new Map();
 
+        const inferEditionNumber = function(entry, index, displayName) {
+            const fromDisplayName = extractEditionNumber(displayName);
+            if (fromDisplayName) return fromDisplayName;
+
+            const fromMetadataName = extractEditionNumber(entry?.meta?.name);
+            if (fromMetadataName) return fromMetadataName;
+
+            const fromCollectionId = buildMetadataCollectionId(entry, index);
+            if (/^\d+$/.test(String(fromCollectionId || '').trim())) {
+                return String(parseInt(fromCollectionId, 10));
+            }
+
+            return String(index + 1);
+        };
+
+        const resolveFallbackCollectionImage = function(editionNumber) {
+            if (!editionNumber) return null;
+
+            if (collection.symbol === 'blok-boyz') {
+                return {
+                    src: `./Blok Boyz/${editionNumber}.png`,
+                    alt: `Blok Boyz #${editionNumber}`
+                };
+            }
+
+            if (collection.symbol === 'blok-space') {
+                return {
+                    src: `./Blok Space/${editionNumber}.png`,
+                    alt: `Blok Space #${editionNumber}`
+                };
+            }
+
+            return null;
+        };
+
         metadataEntries.forEach((entry, index) => {
             const inscriptionId = normalizeInscriptionId(entry?.id);
             if (!inscriptionId) return;
 
             const displayName = String(entry?.meta?.name || `${collection.name} #${index + 1}`).trim();
-            const resolvedImage = resolveMetadataImage(collection, entry, imageLookup);
+            const editionNumber = inferEditionNumber(entry, index, displayName);
+            const resolvedImage = resolveMetadataImage(collection, entry, imageLookup)
+                || resolveFallbackCollectionImage(editionNumber);
             const imageSrc = resolvedImage?.src || collection.fallbackImageSrc || '';
             if (!imageSrc) return;
 
@@ -709,7 +746,7 @@
                 displayName,
                 imageSrc,
                 imageAlt: resolvedImage?.alt || displayName,
-                editionNumber: extractEditionNumber(displayName)
+                editionNumber
             });
         });
 
