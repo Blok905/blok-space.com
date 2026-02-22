@@ -1,11 +1,11 @@
-﻿@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
 body {
     font-family: 'Orbitron', sans-serif;
     background-color: #0d0d0d;
     color: #D77907;
     margin: 0;
     padding: 0;
-    line-height: 1.6;
+    line-height: 1;
     overflow-x: hidden;
     position: relative;
     text-align: center;
@@ -54,41 +54,169 @@ header h1 {
     color: white;
 }
 
-.collection-stats-window {
+.wallet-search-window {
     width: min(980px, calc(100% - 32px));
-    margin: 26px auto 16px;
+    margin: 0 auto;
     padding: 18px 20px;
-    border: 2px solid #D77907;
-    background: linear-gradient(160deg, rgba(15, 15, 15, 0.92), rgba(32, 20, 8, 0.92));
-    box-shadow: 0 0 15px rgba(215, 121, 7, 0.5);
-    text-align: left;
-}
-
-.collection-stats-top {
+    border: none;
+    background: transparent;
+    box-shadow: none;
     display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 12px;
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
 }
 
-.stats-title {
-    margin: 0;
-    font-size: 1.45em;
+.wallet-search-copy {
+    margin: 8px 0 0;
+    color: #f2c07f;
+    font-size: 0.92em;
+}
+
+.wallet-search-form {
+    width: 100%;
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.wallet-search-label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.85em;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #f2c07f;
+    text-align: center;
+}
+
+.wallet-search-controls {
+    width: 100%;
+    max-width: 360px;
+    margin: 0 auto;
+}
+
+.wallet-search-input {
+    display: block;
+    width: 100%;
+    max-width: none;
+    margin: 0 auto;
+    padding: 8px 12px;
+    box-sizing: border-box;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1em;
+    height: auto;
+    color: #D77907;
+    background-color: #000;
+    border: 2px solid #D77907;
+    border-radius: 5px;
+    text-align: center;
+    outline: none;
+    transition: box-shadow 0.3s;
+}
+
+.wallet-search-input:focus {
+    box-shadow: 0 0 10px #D77907;
+}
+
+.wallet-search-status {
+    margin: 12px 0 0;
+    color: #f2c07f;
+    font-size: 0.9em;
+}
+
+.wallet-search-status.is-error {
+    color: #ff6b6b;
+}
+
+.wallet-search-results {
+    margin-top: 14px;
+    text-align: center;
+}
+
+.wallet-result-collection + .wallet-result-collection {
+    margin-top: 16px;
+}
+
+.wallet-result-collection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.wallet-result-title {
+    margin: 0 0 10px;
+    font-size: 1em;
     font-style: normal;
     text-decoration: none;
     animation: none;
     color: #ffffff;
+    text-align: center;
+}
+
+.wallet-results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 150px));
+    gap: 12px;
+    justify-content: center;
+    width: 100%;
+}
+
+.wallet-results-grid img {
+    display: block;
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border: 2px solid #D77907;
+    transition: box-shadow 0.3s;
+}
+
+.wallet-blokchain-frame-crop {
+    width: 150px;
+    height: 150px;
+    border: 2px solid #D77907;
+    overflow: hidden;
+    background: #000000;
+}
+
+.wallet-blokchain-frame {
+    width: 520px;
+    height: 520px;
+    border: 0;
+    transform: scale(0.2885);
+    transform-origin: top left;
+    pointer-events: none;
+    display: block;
+}
+
+.collection-stats-window {
+    width: min(980px, calc(100% - 32px));
+    margin: auto;
+    padding: 18px 20px;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    text-align: center;
+}
+
+.collection-stats-top {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 
 .collection-stats-updated {
     margin: 0;
     font-size: 0.88em;
     color: #f2c07f;
+    text-align: center;
 }
 
 .collection-stats-grid {
-    margin-top: 14px;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 10px;
@@ -101,7 +229,9 @@ header h1 {
     padding: 10px;
     display: flex;
     flex-direction: column;
+    align-items: center;
     gap: 4px;
+    text-align: center;
 }
 
 .collection-stat-label {
@@ -119,9 +249,10 @@ header h1 {
 .collection-stats-footer {
     margin-top: 12px;
     display: flex;
-    justify-content: space-between;
-    gap: 10px;
-    flex-wrap: wrap;
+    flex-direction: column;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: nowrap;
     align-items: center;
 }
 
@@ -129,6 +260,7 @@ header h1 {
     margin: 0;
     font-size: 0.9em;
     color: #f2c07f;
+    text-align: center;
 }
 
 .collection-stats-status.is-error {
@@ -136,11 +268,7 @@ header h1 {
 }
 
 .collection-stats-refresh {
-    background: rgba(215, 121, 7, 0.14);
-    color: #D77907;
-    border: 1px solid #D77907;
-    height: auto;
-    padding: 8px 12px;
+    display: none;
 }
 
 .collection-stats-refresh:disabled {
@@ -250,6 +378,10 @@ footer p {
     box-shadow: 0 0 15px #D77907;
 }
 
+.gallery-item:hover .wallet-blokchain-frame-crop {
+    box-shadow: 0 0 15px #D77907;
+}
+
 .download-button {
     position: absolute;
     right: 6px;
@@ -296,6 +428,7 @@ footer p {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    text-align: center;
     pointer-events: none;
     z-index: 1;
     opacity: 0;
@@ -352,6 +485,21 @@ footer p {
 }
 
 @media (max-width: 600px){
+    .wallet-search-window {
+        width: calc(100% - 20px);
+        padding: 14px;
+    }
+    .wallet-search-title {
+        font-size: 1.1em;
+    }
+    .wallet-search-controls {
+        width: 100%;
+        max-width: 360px;
+        margin: 0 auto;
+    }
+    .wallet-search-input {
+        width: 100%;
+    }
     .collection-stats-window {
         width: calc(100% - 20px);
         padding: 14px;
@@ -381,6 +529,14 @@ footer p {
     }
     .deserted{
         width: 370px;
+    }
+    .gallery-search-row {
+        gap: 8px;
+        width: calc(100% - 20px);
+        grid-template-columns: 46px minmax(0, 1fr) 46px;
+    }
+    .gallery-search-row .gallery-search {
+        max-width: none;
     }
 }
 
@@ -523,8 +679,11 @@ button{
     background-color: #D77907;
 }
 .ME{
-    width: 3.5em;
-    padding-bottom: 10px;
+    width: 4em;
+}
+.ME-alt{
+    width: 4em;
+    margin-bottom: 25px;
 }
 .input-container {
     margin-top: 50px;
@@ -551,8 +710,10 @@ button{
     max-width: 300px;
     margin: 0 auto 1em;
     padding: 8px 12px;
+    box-sizing: border-box;
     font-family: 'Orbitron', sans-serif;
     font-size: 1em;
+    height: auto;
     color: #D77907;
     background-color: #000;
     border: 2px solid #D77907;
@@ -565,6 +726,36 @@ button{
   .gallery-search:focus {
     box-shadow: 0 0 10px #D77907;
   }
+.gallery-search-row {
+    display: grid;
+    grid-template-columns: 56px minmax(240px, 360px) 56px;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    margin: 0 auto 1em;
+}
+
+.gallery-search-slot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.gallery-search-row .gallery-search {
+    margin: 0;
+    width: 100%;
+    max-width: none;
+}
+
+.gallery-search-row .ME {
+    padding-bottom: 0;
+    flex: 0 0 auto;
+}
+
+.gallery-search-slot--right {
+    visibility: hidden;
+}
 iframe {
       width: 95%;
       height: 90vh;
@@ -577,3 +768,4 @@ iframe {
       align-items: center;
       height: 100vh;
     }
+
