@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blok Space</title>
+  <link rel="icon" href="/Images/Surveillance.png">
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&display=swap");
+    :root {
+      --eye-size: clamp(70px, min(31vw, 31vh), 230px);
+      --pupil-size: calc(var(--eye-size) * 0.46);
+      --stack-gap: clamp(14px, 3.2vmin, 28px);
+      --text-size: clamp(19px, 3.57vmin, 48px);
+      --cypher-green: #ff7a00;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+    }
+
+    body {
+      overflow: hidden;
+      background: #000;
+      display: grid;
+      place-items: center;
+      font-family: "Consolas", "Lucida Console", monospace;
+      position: relative;
+    }
+
+    #matrix {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+
+    .eye-stage {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--stack-gap);
+      padding: clamp(12px, 3.2vw, 28px);
+      width: min(94vw, 94vh, 760px);
+    }
+
+    .eye {
+      width: min(var(--eye-size), 100%);
+      aspect-ratio: 1;
+      border-radius: 50%;
+      position: relative;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      cursor: pointer;
+      touch-action: manipulation;
+      background: radial-gradient(circle, #ff9b42 32%, #ff4e00 76%, #6e1e00 100%);
+      box-shadow:
+        0 0 24px rgba(255, 110, 0, 0.6),
+        0 0 52px rgba(255, 70, 0, 0.45),
+        0 0 92px rgba(255, 50, 0, 0.28);
+    }
+
+    .pupil {
+      width: var(--pupil-size);
+      aspect-ratio: 1;
+      border-radius: 50%;
+      position: absolute;
+      background: radial-gradient(circle at center, #000 0%, #4d0000 100%);
+      box-shadow: 0 0 16px rgba(0, 0, 0, 0.88);
+      transition: transform 0.06s linear;
+      will-change: transform;
+    }
+
+    .top-eyelid,
+    .bottom-eyelid {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      height: 50%;
+      pointer-events: none;
+      transition: transform 0.18s ease-in-out;
+    }
+
+    .top-eyelid {
+      top: 0;
+      transform: translateY(-102%);
+      background: linear-gradient(to bottom, rgba(0, 0, 0, 0.96), rgba(0, 0, 0, 0.72));
+      box-shadow: inset 0 10px 16px rgba(255, 255, 255, 0.08);
+    }
+
+    .bottom-eyelid {
+      bottom: 0;
+      transform: translateY(102%);
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.96), rgba(0, 0, 0, 0.72));
+      box-shadow: inset 0 -10px 16px rgba(255, 255, 255, 0.08);
+    }
+
+    .eye.blink .top-eyelid,
+    .eye.blink .bottom-eyelid {
+      transform: translateY(0);
+    }
+
+    .loading-text {
+      position: relative;
+      min-height: 1.25em;
+      color: var(--cypher-green);
+      font-family: "Orbitron", "Consolas", "Lucida Console", monospace;
+      font-size: var(--text-size);
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      text-align: center;
+      text-shadow:
+        0 0 8px rgba(255, 145, 0, 0.9),
+        0 0 22px rgba(255, 120, 0, 0.62),
+        0 0 38px rgba(255, 84, 0, 0.36);
+      white-space: nowrap;
+      line-height: 1.2;
+      max-width: 100%;
+      animation: caret 0.9s steps(1, end) infinite;
+      border-right: 0.12em solid rgba(255, 140, 0, 0.95);
+      padding-right: 0.2em;
+    }
+
+    .loading-text.done {
+      animation: none;
+      border-right-color: transparent;
+    }
+
+    .loading-text::before,
+    .loading-text::after {
+      content: attr(data-text);
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0;
+    }
+
+    .loading-text.glitching::before {
+      color: #ffd7ad;
+      transform: translate(2px, -1px);
+      opacity: 0.72;
+      text-shadow: -2px 0 rgba(255, 195, 132, 0.78);
+      animation: glitch-a 0.48s infinite steps(2, end);
+    }
+
+    .loading-text.glitching::after {
+      color: #ff9300;
+      transform: translate(-2px, 1px);
+      opacity: 0.66;
+      text-shadow: 2px 0 rgba(255, 128, 0, 0.82);
+      animation: glitch-b 0.38s infinite steps(2, end);
+    }
+
+    @keyframes caret {
+      50% {
+        border-right-color: transparent;
+      }
+    }
+
+    @keyframes glitch-a {
+      0%,
+      9%,
+      46%,
+      100% {
+        clip-path: inset(0 0 0 0);
+      }
+      10% {
+        clip-path: inset(2% 0 78% 0);
+      }
+      18% {
+        clip-path: inset(66% 0 12% 0);
+      }
+      27% {
+        clip-path: inset(36% 0 38% 0);
+      }
+      34% {
+        clip-path: inset(82% 0 2% 0);
+      }
+      41% {
+        clip-path: inset(12% 0 60% 0);
+      }
+    }
+
+
+    @keyframes glitch-b {
+      0%,
+      8%,
+      54%,
+      100% {
+        clip-path: inset(0 0 0 0);
+      }
+      11% {
+        clip-path: inset(68% 0 8% 0);
+      }
+      19% {
+        clip-path: inset(8% 0 74% 0);
+      }
+      29% {
+        clip-path: inset(48% 0 26% 0);
+      }
+      37% {
+        clip-path: inset(20% 0 52% 0);
+      }
+      46% {
+        clip-path: inset(74% 0 6% 0);
+      }
+    }
+
+  </style>
+</head>
+<body>
+  <canvas id="matrix"></canvas>
+
+  <div class="eye-stage">
+    <div class="eye" id="surveillanceEye" aria-label="Surveillance eye" role="button" tabindex="0">
+      <div class="pupil" id="pupil"></div>
+      <div class="top-eyelid"></div>
+      <div class="bottom-eyelid"></div>
+    </div>
+    <div id="loadingText" class="loading-text" data-text="" aria-live="polite"></div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("matrix");
+    const ctx = canvas.getContext("2d");
+    const fontSize = 18;
+    const glyphs = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<>$#@%&";
+    let columns = 0;
+    let drops = [];
+    let speeds = [];
+
+    function resetMatrix() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      columns = Math.ceil(canvas.width / fontSize);
+      drops = Array.from({ length: columns }, () => Math.random() * (canvas.height / fontSize));
+      speeds = Array.from({ length: columns }, () => 0.65 + Math.random() * 1.35);
+    }
+
+    function drawMatrix() {
+      ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#0f0";
+      ctx.font = `${fontSize}px "Consolas", "Lucida Console", monospace`;
+      ctx.textBaseline = "top";
+
+      for (let i = 0; i < columns; i += 1) {
+        const char = glyphs[Math.floor(Math.random() * glyphs.length)];
+        const x = i * fontSize;
+        const y = Math.floor(drops[i]) * fontSize;
+
+        ctx.fillText(char, x, y);
+        drops[i] += speeds[i] * 0.35;
+
+        if (y > canvas.height && Math.random() > 0.976) {
+          drops[i] = 0;
+        }
+      }
+
+      requestAnimationFrame(drawMatrix);
+    }
+
+    resetMatrix();
+    drawMatrix();
+    window.addEventListener("resize", resetMatrix);
+
+    const eye = document.getElementById("surveillanceEye");
+    const pupil = document.getElementById("pupil");
+    const loadingText = document.getElementById("loadingText");
+    const message = "LOADING BLOK SPACE...";
+    const scramble = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#$%";
+
+    const pointer = {
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 2
+    };
+
+    let blinkTimeout;
+
+    function blinkEye() {
+      eye.classList.remove("blink");
+      void eye.offsetWidth;
+      eye.classList.add("blink");
+      clearTimeout(blinkTimeout);
+      blinkTimeout = setTimeout(() => {
+        eye.classList.remove("blink");
+      }, 260);
+    }
+
+    function updatePointer(event) {
+      pointer.x = event.clientX;
+      pointer.y = event.clientY;
+    }
+
+    function trackPointer() {
+      const rect = eye.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      const dx = pointer.x - centerX;
+      const dy = pointer.y - centerY;
+      const angle = Math.atan2(dy, dx);
+      const distance = Math.min(rect.width * 0.17, Math.hypot(dx, dy) * 0.2);
+
+      pupil.style.transform = `translate(${Math.cos(angle) * distance}px, ${Math.sin(angle) * distance}px)`;
+      requestAnimationFrame(trackPointer);
+    }
+
+    function setLoadingText(value) {
+      loadingText.textContent = value;
+      loadingText.setAttribute("data-text", value);
+    }
+
+    function randomScrambleChar() {
+      return scramble[Math.floor(Math.random() * scramble.length)];
+    }
+
+    let index = 0;
+
+    function typeLoadingText() {
+      if (index <= message.length) {
+        const typed = message.slice(0, index);
+        const preview = index < message.length ? randomScrambleChar() : "";
+        setLoadingText(typed + preview);
+        index += 1;
+        setTimeout(typeLoadingText, index < 5 ? 110 : 70);
+        return;
+      }
+
+      setLoadingText(message);
+      loadingText.classList.add("done", "glitching");
+    }
+
+    eye.addEventListener("click", blinkEye);
+    eye.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        blinkEye();
+      }
+    });
+
+    window.addEventListener("pointermove", updatePointer, { passive: true });
+    window.addEventListener("pointerdown", updatePointer, { passive: true });
+
+    trackPointer();
+    typeLoadingText();
+  </script>
+</body>
+</html>

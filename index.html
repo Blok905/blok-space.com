@@ -4,10 +4,50 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Blok Space</title>
-    <link rel="stylesheet" href="styles.css?v=20260222-3">
+    <link rel="stylesheet" href="styles.css?v=20260225-14">
     <link rel="icon" href="/Images/Surveillance.png">
+    <script>
+        window.__blokSpaceLoadStart = (window.performance && typeof window.performance.now === 'function')
+            ? window.performance.now()
+            : Date.now();
+        document.documentElement.classList.add('is-loading-screen-active');
+    </script>
+    <style>
+        html.is-loading-screen-active,
+        body.is-loading-screen-active {
+            overflow: hidden !important;
+        }
+
+        #site-loading-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 2147483647;
+            background: #000;
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+            transition: opacity 420ms ease, visibility 0s linear 420ms;
+        }
+
+        #site-loading-overlay.site-loading-overlay--hide {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        #site-loading-frame {
+            width: 100%;
+            height: 100%;
+            border: 0;
+            display: block;
+            background: #000;
+        }
+    </style>
 </head>
-<body>
+<body class="is-loading-screen-active">
+    <div id="site-loading-overlay" role="status" aria-live="polite" aria-label="Loading Blok Space">
+        <iframe id="site-loading-frame" src="./index_loading.html" title="Blok Space loading screen" loading="eager"></iframe>
+    </div>
     <div class="grid-background"></div>
     <header>
         <div id="curves">
@@ -19,7 +59,7 @@
                 </div>
             </div>
         </div>
-        <h1>Blok's Artistic Observatory</h1>
+        <h1 data-text="Blok's Artistic Observatory">Blok's Artistic Observatory</h1>
         <p id="sub">Hand-Drawn Pixel Art Inscribed on the ₿itcoin Blokchain</p>
     </header>
     <section class="wallet-search-window" aria-labelledby="wallet-search-title">
@@ -27,6 +67,7 @@
             <label class="wallet-search-label" for="wallet-search-input">Bitcoin wallet address search</label>
             <div class="wallet-search-controls">
                 <input id="wallet-search-input" class="wallet-search-input" type="text" autocomplete="off" spellcheck="false" placeholder="bc1..." required>
+                <span id="wallet-search-spinner" class="wallet-search-spinner" aria-hidden="true"></span>
             </div>
         </form>
         <p id="wallet-search-status" class="wallet-search-status" aria-live="polite"></p>
@@ -68,7 +109,7 @@
     </section>
     <main>
         <section id="gallery">
-            <h2>Palindrome Punks</h2>
+            <h2 data-text="Palindrome Punks">Palindrome Punks</h2>
             <p>Date: 06/2023 (Genesis)</p>
             <p>Inscription Canvas: Palindrome Satoshis</p>
             <p>Unique 1-of-1 Profile Picture (PFP) Art Work</p>
@@ -211,7 +252,7 @@
                     <button type="button" class="collection-stats-refresh">Refresh</button>
                 </div>
             </section>
-            <h2>Blok Boyz</h2>
+            <h2 data-text="Blok Boyz">Blok Boyz</h2>
             <p>Date: 08/2024</p>
             <p>Inscription Canvas: Blok 78 Satoshis</p>
             <p>Recursive Technology used to render multiple submodules of hand-drawn traits</p>
@@ -260,7 +301,7 @@
                 <button type="button" class="collection-stats-refresh">Refresh</button>
             </div>
         </section>
-        <h2>Blok Space</h2>
+        <h2 data-text="Blok Space">Blok Space</h2>
         <p>Date: 04/2025</p>
         <p>Inscription Canvas: Blok 9 - 450x Satoshis</p>
         <p>Recursive Technology used to render multiple submodules of hand-drawn traits</p>
@@ -309,7 +350,7 @@
                 <button type="button" class="collection-stats-refresh">Refresh</button>
             </div>
         </section>
-        <h2>Blokchain Surveillance</h2>
+        <h2 data-text="Blokchain Surveillance">Blokchain Surveillance</h2>
         <p>Date: 04/2025</p>
         <p>Inscription Canvas: Silk Road Satoshis</p>
         <p>Aritificial Intelligence (AI) generated code art</p>
@@ -317,21 +358,25 @@
         <p>From the ashes of the Silk Road, rose the phoenix of on-chain surveillance</p>
         <a href="https://magiceden.io/ordinals/marketplace/blokchain-surveillance"><img class="ME-alt" src="./Images/ME.png"></a>
   <style>
-    iframe {
-      width: 95%;
-      height: 90vh;
+    #blokchain-main-frame {
+      width: min(95vw, 1200px);
+      height: min(80vh, 68vw);
       border: 4px solid #f7931a;
       box-shadow: 0 0 20px #f7931a;
-      margin: auto;
+      margin: 16px auto;
       background: #111;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
+      display: block;
+    }
+
+    @media (max-width: 900px) {
+      #blokchain-main-frame {
+        width: 96vw;
+        height: min(72vh, 88vw);
+      }
     }
   </style>
 </head>
-  <iframe src="./Blokchain/index_blokchain.html" title="Blockchain Viewport" allowfullscreen></iframe>
+  <iframe id="blokchain-main-frame" src="./Blokchain/index_blokchain.html" title="Blockchain Viewport" allowfullscreen></iframe>
             <section class="collection-stats-window" data-collection-symbol="art-drops" data-collection-name="Art-Drops" aria-live="polite">
                 <div class="collection-stats-top">
                     <p class="collection-stats-updated">Loading latest data...</p>
@@ -366,7 +411,7 @@
                     <button type="button" class="collection-stats-refresh">Refresh</button>
                 </div>
             </section>
-            <h2>Art-Drops</h2>
+            <h2 data-text="Art-Drops">Art-Drops</h2>
             <p>Date: 08/2023</p>
             <p>Inscription Canvas: Various Rare/Exotic Satoshis</p>
             <p>Unique 1-of-1 Freestyle Art Work</p>
@@ -407,7 +452,7 @@
     <footer>
         <p>Est. 2023</p>
     </footer>
-    <script src="script.js?v=20260222-4"></script>
+    <script src="script.js?v=20260225-6"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const upscaleFactor = 4;
@@ -416,15 +461,163 @@
             const palindromeReferenceDurationSeconds = 31.2;
             const fallbackCarouselPixelsPerSecond = 180;
             const carouselSpeedScale = 0.8;
+            const magicEdenItemBaseUrl = 'https://magiceden.io/ordinals/item-details/';
+            const magicEdenIconPath = './Images/ME.png';
+            const collectionMetadataPaths = new Map([
+                ['palindrome-punks', './palindrome-punks-metadata.json'],
+                ['blok-boyz', './blok-boyz-metadata.json'],
+                ['blok-space', './blok-space-metadata.json'],
+                ['art-drops', './art-drops-metadata.json']
+            ]);
             let sharedCarouselPixelsPerSecond = null;
 
-            function getDownloadName(img) {
+            function setupBlokchainResponsiveEmbed() {
+                const frame = document.getElementById('blokchain-main-frame');
+                if (!frame) return;
+
+                function ensureResponsiveIframeStyles() {
+                    let frameDoc;
+                    let frameRoot;
+
+                    try {
+                        frameDoc = frame.contentDocument;
+                        frameRoot = frameDoc && frameDoc.documentElement;
+                    } catch (error) {
+                        return;
+                    }
+
+                    if (!frameDoc || !frameRoot) return;
+
+                    let styleNode = frameDoc.getElementById('blokchain-responsive-overrides');
+                    if (!styleNode) {
+                        styleNode = frameDoc.createElement('style');
+                        styleNode.id = 'blokchain-responsive-overrides';
+                        styleNode.textContent = `
+                            :root {
+                                --blokchain-scale: 1;
+                                --blokchain-eye-size: clamp(150px, calc(250px * var(--blokchain-scale)), 460px);
+                                --blokchain-pupil-size: clamp(72px, calc(120px * var(--blokchain-scale)), 220px);
+                                --blokchain-path-size: clamp(12px, calc(20px * var(--blokchain-scale)), 36px);
+                                --blokchain-block-size: clamp(22px, calc(40px * var(--blokchain-scale)), 72px);
+                            }
+
+                            .eye {
+                                width: var(--blokchain-eye-size) !important;
+                                height: var(--blokchain-eye-size) !important;
+                            }
+
+                            .pupil {
+                                width: var(--blokchain-pupil-size) !important;
+                                height: var(--blokchain-pupil-size) !important;
+                            }
+
+                            .chain-path {
+                                background-size: var(--blokchain-path-size) var(--blokchain-path-size) !important;
+                            }
+
+                            .chain-path.top,
+                            .chain-path.bottom {
+                                height: var(--blokchain-path-size) !important;
+                            }
+
+                            .chain-path.left,
+                            .chain-path.right {
+                                width: var(--blokchain-path-size) !important;
+                            }
+
+                            .chain-block {
+                                width: var(--blokchain-block-size) !important;
+                                height: var(--blokchain-block-size) !important;
+                                animation-name: moveChainResponsive !important;
+                            }
+
+                            @keyframes moveChainResponsive {
+                                0% { top: 0; left: 0; }
+                                25% { top: 0; left: calc(100% - var(--blokchain-block-size)); }
+                                50% { top: calc(100% - var(--blokchain-block-size)); left: calc(100% - var(--blokchain-block-size)); }
+                                75% { top: calc(100% - var(--blokchain-block-size)); left: 0; }
+                                100% { top: 0; left: 0; }
+                            }
+                        `;
+                        (frameDoc.head || frameRoot).appendChild(styleNode);
+                    }
+
+                    const frameWidth = Math.max(frame.clientWidth || 0, 1);
+                    const frameHeight = Math.max(frame.clientHeight || 0, 1);
+                    const widthScale = frameWidth / 1280;
+                    const heightScale = frameHeight / 720;
+                    const scale = Math.max(0.55, Math.min(1.65, Math.min(widthScale, heightScale) * 1.2));
+
+                    frameRoot.style.setProperty('--blokchain-scale', scale.toFixed(4));
+                }
+
+                let resizeFrameToken = null;
+                function queueResponsiveIframeUpdate() {
+                    if (resizeFrameToken !== null) return;
+                    resizeFrameToken = window.requestAnimationFrame(function() {
+                        resizeFrameToken = null;
+                        ensureResponsiveIframeStyles();
+                    });
+                }
+
+                frame.addEventListener('load', function() {
+                    queueResponsiveIframeUpdate();
+                    window.setTimeout(queueResponsiveIframeUpdate, 120);
+                });
+
+                window.addEventListener('resize', queueResponsiveIframeUpdate);
+                queueResponsiveIframeUpdate();
+            }
+
+            function getImageSourceUrl(img) {
+                return String(img.currentSrc || img.getAttribute('src') || img.src || '').trim();
+            }
+
+            function getImageSourceExtension(img) {
+                const sourceUrl = getImageSourceUrl(img).split('#')[0].split('?')[0];
+                const extensionMatch = sourceUrl.match(/\.([a-z0-9]+)$/i);
+                return extensionMatch ? extensionMatch[1].toLowerCase() : '';
+            }
+
+            function triggerBlobDownload(blob, fileName) {
+                if (!blob) return;
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                setTimeout(function() {
+                    URL.revokeObjectURL(link.href);
+                }, 0);
+            }
+
+            function triggerDirectFileDownload(fileUrl, fileName) {
+                if (!fileUrl) return;
+                const link = document.createElement('a');
+                link.href = fileUrl;
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+
+            function releaseControlFocus(control) {
+                if (!control || typeof control.blur !== 'function') return;
+                control.blur();
+                setTimeout(function() {
+                    control.blur();
+                }, 0);
+            }
+
+            function getDownloadName(img, extensionOverride) {
                 const sourceName = (img.getAttribute('alt') || 'image')
                     .split('/')
                     .pop()
                     .split('?')[0]
                     .replace(/\.[^.]+$/, '');
-                return sourceName + '.jpg';
+                const extension = extensionOverride || (getImageSourceExtension(img) === 'gif' ? 'gif' : 'jpg');
+                return sourceName + '.' + extension;
             }
 
             function getImageTitle(img) {
@@ -437,7 +630,227 @@
                     .replace(/\.[^.]+$/, '');
             }
 
+            function extractEditionNumber(value) {
+                const normalized = String(value || '').trim();
+                if (!normalized) return '';
+                const hashMatch = normalized.match(/#\s*(\d+)/i);
+                if (hashMatch && hashMatch[1]) return String(parseInt(hashMatch[1], 10));
+                if (/^\d+$/.test(normalized)) return String(parseInt(normalized, 10));
+                return '';
+            }
+
+            function normalizeMagicEdenLookupText(value) {
+                return String(value || '')
+                    .toLowerCase()
+                    .replace(/\.[^.]+$/, '')
+                    .replace(/&/g, ' and ')
+                    .replace(/[^a-z0-9]+/g, ' ')
+                    .trim();
+            }
+
+            function getImageStemFromElement(img) {
+                const sourceUrl = getImageSourceUrl(img).split('#')[0].split('?')[0];
+                const pathParts = sourceUrl.split('/');
+                const fileName = pathParts[pathParts.length - 1] || '';
+                let decodedName = fileName;
+                try {
+                    decodedName = decodeURIComponent(fileName);
+                } catch (error) {
+                    decodedName = fileName;
+                }
+                return decodedName.replace(/\.[^.]+$/, '');
+            }
+
+            function getMagicEdenNameCandidates(value) {
+                const raw = String(value || '').trim();
+                if (!raw) return [];
+
+                const withoutEdition = raw.replace(/\s*#\s*\d+\s*$/i, '');
+                const variants = [
+                    raw,
+                    withoutEdition,
+                    withoutEdition.replace(/\s+punk\s*$/i, ''),
+                    withoutEdition.replace(/^punk\s+/i, '')
+                ];
+
+                return Array.from(new Set(
+                    variants
+                        .map(normalizeMagicEdenLookupText)
+                        .filter(Boolean)
+                ));
+            }
+
+            function createEmptyMagicEdenLookup() {
+                return {
+                    byNumber: new Map(),
+                    byName: new Map()
+                };
+            }
+
+            function isLikelyInscriptionId(value) {
+                return /^[0-9a-f]{64}i\d+$/i.test(String(value || '').trim());
+            }
+
+            async function loadMagicEdenLookupBySymbol() {
+                const lookupBySymbol = new Map();
+
+                await Promise.all(Array.from(collectionMetadataPaths.entries()).map(async function(entry) {
+                    const collectionSymbol = entry[0];
+                    const metadataPath = entry[1];
+                    const collectionLookup = createEmptyMagicEdenLookup();
+
+                    try {
+                        const response = await fetch(metadataPath, {
+                            headers: { Accept: 'application/json' }
+                        });
+                        if (!response.ok) {
+                            throw new Error('Metadata request failed with status ' + response.status);
+                        }
+
+                        const metadataPayload = await response.json();
+                        const metadataEntries = Array.isArray(metadataPayload) ? metadataPayload : [];
+
+                        metadataEntries.forEach(function(item) {
+                            const inscriptionId = String(item && item.id || '').trim().toLowerCase();
+                            if (!isLikelyInscriptionId(inscriptionId)) return;
+
+                            const metadataName = String(item && item.meta && item.meta.name || '').trim();
+                            const editionNumber = extractEditionNumber(metadataName);
+                            if (editionNumber && !collectionLookup.byNumber.has(editionNumber)) {
+                                collectionLookup.byNumber.set(editionNumber, inscriptionId);
+                            }
+
+                            getMagicEdenNameCandidates(metadataName).forEach(function(candidate) {
+                                if (!collectionLookup.byName.has(candidate)) {
+                                    collectionLookup.byName.set(candidate, inscriptionId);
+                                }
+                            });
+                        });
+                    } catch (error) {
+                        console.warn('Unable to build Magic Eden item lookup for ' + collectionSymbol + ':', error);
+                    }
+
+                    lookupBySymbol.set(collectionSymbol, collectionLookup);
+                }));
+
+                return lookupBySymbol;
+            }
+
+            function resolveCollectionSymbolForImage(img) {
+                const galleryGrid = img.closest('.gallery-grid[data-collection-symbol]');
+                if (galleryGrid) {
+                    return String(galleryGrid.dataset.collectionSymbol || '').trim().toLowerCase();
+                }
+
+                if (img.closest('.gallery-flex')) return 'art-drops';
+
+                return '';
+            }
+
+            function resolveMagicEdenInscriptionIdForImage(img, lookupBySymbol) {
+                const collectionSymbol = resolveCollectionSymbolForImage(img);
+                if (!collectionSymbol) return '';
+
+                const collectionLookup = lookupBySymbol.get(collectionSymbol);
+                if (!collectionLookup) return '';
+
+                const imageAlt = String(img.getAttribute('alt') || '').trim();
+                const imageStem = getImageStemFromElement(img);
+
+                const numberCandidates = Array.from(new Set([
+                    extractEditionNumber(imageAlt),
+                    extractEditionNumber(imageStem)
+                ].filter(Boolean)));
+
+                for (const numberCandidate of numberCandidates) {
+                    const matchedByNumber = collectionLookup.byNumber.get(numberCandidate);
+                    if (matchedByNumber) return matchedByNumber;
+                }
+
+                const nameCandidates = Array.from(new Set([
+                    ...getMagicEdenNameCandidates(imageAlt),
+                    ...getMagicEdenNameCandidates(imageStem)
+                ]));
+
+                for (const nameCandidate of nameCandidates) {
+                    const matchedByName = collectionLookup.byName.get(nameCandidate);
+                    if (matchedByName) return matchedByName;
+                }
+
+                return '';
+            }
+
+            function findDirectChildByClass(parentNode, className) {
+                if (!parentNode) return null;
+
+                const container = parentNode.classList
+                    && (parentNode.classList.contains('gallery-item') || parentNode.classList.contains('gallery-flex-item'))
+                    ? ensureGalleryItemVisualContainer(parentNode)
+                    : parentNode;
+
+                return Array.from(container.children).find(function(child) {
+                    return child.classList && child.classList.contains(className);
+                }) || null;
+            }
+
+            function ensureGalleryItemVisualContainer(wrapper) {
+                if (!wrapper) return null;
+
+                const existingVisualContainer = Array.from(wrapper.children).find(function(child) {
+                    return child.classList && child.classList.contains('gallery-item-visual');
+                });
+                if (existingVisualContainer) return existingVisualContainer;
+
+                const visualContainer = document.createElement('div');
+                visualContainer.className = 'gallery-item-visual';
+
+                while (wrapper.firstChild) {
+                    visualContainer.appendChild(wrapper.firstChild);
+                }
+
+                wrapper.appendChild(visualContainer);
+                return visualContainer;
+            }
+
+            function ensureMagicEdenItemLink(wrapper, img, lookupBySymbol) {
+                if (!wrapper || !img) return;
+
+                const visualContainer = ensureGalleryItemVisualContainer(wrapper);
+                const existingLink = findDirectChildByClass(wrapper, 'item-magic-eden-link');
+                const inscriptionId = resolveMagicEdenInscriptionIdForImage(img, lookupBySymbol);
+
+                if (!inscriptionId) {
+                    if (existingLink) existingLink.remove();
+                    return;
+                }
+
+                const imageTitle = getImageTitle(img);
+                const magicEdenLink = existingLink || document.createElement('a');
+                magicEdenLink.className = 'item-magic-eden-link';
+                magicEdenLink.href = magicEdenItemBaseUrl + inscriptionId;
+                magicEdenLink.target = '_blank';
+                magicEdenLink.rel = 'noopener noreferrer';
+                magicEdenLink.style.backgroundImage = 'url(' + magicEdenIconPath + ')';
+                magicEdenLink.title = 'View on Magic Eden';
+                magicEdenLink.setAttribute('aria-label', 'View ' + imageTitle + ' on Magic Eden');
+
+                if (!existingLink) {
+                    magicEdenLink.addEventListener('click', function(event) {
+                        event.stopPropagation();
+                        releaseControlFocus(magicEdenLink);
+                    });
+                    visualContainer.appendChild(magicEdenLink);
+                }
+            }
+
             function downloadUpscaledJpeg(img) {
+                if (getImageSourceExtension(img) === 'gif') {
+                    const sourceUrl = getImageSourceUrl(img);
+                    if (!sourceUrl) return;
+                    triggerDirectFileDownload(sourceUrl, getDownloadName(img, 'gif'));
+                    return;
+                }
+
                 const sourceWidth = img.naturalWidth || img.width;
                 const sourceHeight = img.naturalHeight || img.height;
                 if (!sourceWidth || !sourceHeight) return;
@@ -451,33 +864,35 @@
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
                 canvas.toBlob(function(blob) {
-                    if (!blob) return;
-                    const link = document.createElement('a');
-                    link.href = URL.createObjectURL(blob);
-                    link.download = getDownloadName(img);
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    setTimeout(function() {
-                        URL.revokeObjectURL(link.href);
-                    }, 0);
+                    triggerBlobDownload(blob, getDownloadName(img));
                 }, 'image/jpeg', 0.95);
             }
+
+            const magicEdenLookupBySymbolPromise = loadMagicEdenLookupBySymbol();
+            const pendingMagicEdenBindings = [];
 
             function bindGalleryDownloadDelegation(gallery) {
                 if (gallery.dataset.downloadDelegated === 'true') return;
 
                 gallery.addEventListener('click', function(event) {
                     const downloadButton = event.target.closest('.download-button');
-                    if (!downloadButton || !gallery.contains(downloadButton)) return;
+                    if (downloadButton && gallery.contains(downloadButton)) {
+                        const item = downloadButton.closest('.gallery-item');
+                        if (!item || item.dataset.carouselClone !== 'true') return;
+                        const img = item ? item.querySelector('img') : null;
+                        if (!img) return;
 
-                    const item = downloadButton.closest('.gallery-item');
-                    if (!item || item.dataset.carouselClone !== 'true') return;
-                    const img = item ? item.querySelector('img') : null;
-                    if (!img) return;
+                        event.stopPropagation();
+                        releaseControlFocus(downloadButton);
+                        downloadUpscaledJpeg(img);
+                        return;
+                    }
 
-                    event.stopPropagation();
-                    downloadUpscaledJpeg(img);
+                    const magicEdenLink = event.target.closest('.item-magic-eden-link');
+                    if (magicEdenLink && gallery.contains(magicEdenLink)) {
+                        event.stopPropagation();
+                        releaseControlFocus(magicEdenLink);
+                    }
                 });
 
                 gallery.dataset.downloadDelegated = 'true';
@@ -596,35 +1011,64 @@
                 gallery.dataset.carouselRebuildBound = 'true';
             }
 
+            setupBlokchainResponsiveEmbed();
+
             const galleries = document.querySelectorAll('.gallery-grid');
             galleries.forEach(function(gallery) {
                 try {
                     const images = Array.from(gallery.querySelectorAll('img'));
 
                     images.forEach(function(img) {
-                        if (img.parentElement && img.parentElement.classList.contains('gallery-item')) return;
+                        const existingWrapper = img.parentElement && img.parentElement.classList.contains('gallery-item')
+                            ? img.parentElement
+                            : null;
+                        const wrapper = existingWrapper || (function() {
+                            const createdWrapper = document.createElement('div');
+                            createdWrapper.className = 'gallery-item';
+                            createdWrapper.dataset.carouselClone = 'false';
+                            img.parentNode.insertBefore(createdWrapper, img);
+                            createdWrapper.appendChild(img);
+                            return createdWrapper;
+                        })();
+                        const visualContainer = ensureGalleryItemVisualContainer(wrapper);
 
-                        const wrapper = document.createElement('div');
-                        wrapper.className = 'gallery-item';
-                        wrapper.dataset.carouselClone = 'false';
-                        img.parentNode.insertBefore(wrapper, img);
-                        wrapper.appendChild(img);
+                        const hasTitleFooter = findDirectChildByClass(wrapper, 'image-title');
+                        if (!hasTitleFooter) {
+                            const titleFooter = document.createElement('div');
+                            titleFooter.className = 'image-title';
+                            titleFooter.textContent = getImageTitle(img);
+                            visualContainer.appendChild(titleFooter);
+                        }
 
-                        const titleFooter = document.createElement('div');
-                        titleFooter.className = 'image-title';
-                        titleFooter.textContent = getImageTitle(img);
-                        wrapper.appendChild(titleFooter);
+                        const hasDownloadButton = findDirectChildByClass(wrapper, 'download-button');
+                        const downloadButton = hasDownloadButton || (function() {
+                            const button = document.createElement('button');
+                            button.type = 'button';
+                            button.className = 'download-button';
+                            button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3v10.17l3.59-3.58L17 11l-5 5-5-5 1.41-1.41L11 13.17V3h1zm-7 14h14v2H5v-2z"></path></svg>';
+                            visualContainer.appendChild(button);
+                            return button;
+                        })();
 
-                        const downloadButton = document.createElement('button');
-                        downloadButton.type = 'button';
-                        downloadButton.className = 'download-button';
-                        downloadButton.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3v10.17l3.59-3.58L17 11l-5 5-5-5 1.41-1.41L11 13.17V3h1zm-7 14h14v2H5v-2z"></path></svg>';
-                        downloadButton.setAttribute('aria-label', 'Download upscaled JPEG');
-                        downloadButton.addEventListener('click', function(event) {
-                            event.stopPropagation();
-                            downloadUpscaledJpeg(img);
+                        if (downloadButton.dataset.downloadBound !== 'true') {
+                            downloadButton.type = 'button';
+                            downloadButton.className = 'download-button';
+                            downloadButton.setAttribute(
+                                'aria-label',
+                                getImageSourceExtension(img) === 'gif' ? 'Download original GIF' : 'Download upscaled JPEG'
+                            );
+                            downloadButton.addEventListener('click', function(event) {
+                                event.stopPropagation();
+                                releaseControlFocus(downloadButton);
+                                downloadUpscaledJpeg(img);
+                            });
+                            downloadButton.dataset.downloadBound = 'true';
+                        }
+
+                        pendingMagicEdenBindings.push({
+                            wrapper: wrapper,
+                            image: img
                         });
-                        wrapper.appendChild(downloadButton);
                     });
 
                     bindGalleryDownloadDelegation(gallery);
@@ -636,24 +1080,19 @@
             });
 
             const artDropImages = Array.from(document.querySelectorAll('.gallery-flex img'));
-            function findDirectChildByClass(parentNode, className) {
-                return Array.from(parentNode.children).find(function(child) {
-                    return child.classList && child.classList.contains(className);
-                }) || null;
-            }
-
             artDropImages.forEach(function(img) {
                 const wrapper = img.parentElement;
                 if (!wrapper) return;
 
                 wrapper.classList.add('gallery-flex-item');
+                const visualContainer = ensureGalleryItemVisualContainer(wrapper);
 
                 const hasTitleFooter = findDirectChildByClass(wrapper, 'image-title');
                 if (!hasTitleFooter) {
                     const titleFooter = document.createElement('div');
                     titleFooter.className = 'image-title';
                     titleFooter.textContent = getImageTitle(img);
-                    wrapper.appendChild(titleFooter);
+                    visualContainer.appendChild(titleFooter);
                 }
 
                 const hasDownloadButton = findDirectChildByClass(wrapper, 'download-button');
@@ -662,37 +1101,489 @@
                     button.type = 'button';
                     button.className = 'download-button';
                     button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3v10.17l3.59-3.58L17 11l-5 5-5-5 1.41-1.41L11 13.17V3h1zm-7 14h14v2H5v-2z"></path></svg>';
-                    button.setAttribute('aria-label', 'Download upscaled JPEG');
-                    wrapper.appendChild(button);
+                    button.setAttribute(
+                        'aria-label',
+                        getImageSourceExtension(img) === 'gif' ? 'Download original GIF' : 'Download upscaled JPEG'
+                    );
+                    visualContainer.appendChild(button);
                     return button;
                 })();
 
                 if (downloadButton.dataset.downloadBound !== 'true') {
                     downloadButton.type = 'button';
                     downloadButton.className = 'download-button';
-                    downloadButton.setAttribute('aria-label', 'Download upscaled JPEG');
+                    downloadButton.setAttribute(
+                        'aria-label',
+                        getImageSourceExtension(img) === 'gif' ? 'Download original GIF' : 'Download upscaled JPEG'
+                    );
                     downloadButton.addEventListener('click', function(event) {
                         event.stopPropagation();
+                        releaseControlFocus(downloadButton);
                         downloadUpscaledJpeg(img);
                     });
                     downloadButton.dataset.downloadBound = 'true';
                 }
+
+                pendingMagicEdenBindings.push({
+                    wrapper: wrapper,
+                    image: img
+                });
             });
 
             const artDropsGallery = document.querySelector('.gallery-flex');
             if (artDropsGallery && artDropsGallery.dataset.downloadDelegated !== 'true') {
                 artDropsGallery.addEventListener('click', function(event) {
                     const downloadButton = event.target.closest('.download-button');
-                    if (!downloadButton || !artDropsGallery.contains(downloadButton)) return;
-                    const item = downloadButton.closest('.gallery-flex-item');
-                    const img = item ? item.querySelector('img') : null;
-                    if (!img) return;
-                    event.stopPropagation();
-                    downloadUpscaledJpeg(img);
+                    if (downloadButton && artDropsGallery.contains(downloadButton)) {
+                        const item = downloadButton.closest('.gallery-flex-item');
+                        const img = item ? item.querySelector('img') : null;
+                        if (!img) return;
+                        event.stopPropagation();
+                        releaseControlFocus(downloadButton);
+                        downloadUpscaledJpeg(img);
+                        return;
+                    }
+
+                    const magicEdenLink = event.target.closest('.item-magic-eden-link');
+                    if (magicEdenLink && artDropsGallery.contains(magicEdenLink)) {
+                        event.stopPropagation();
+                        releaseControlFocus(magicEdenLink);
+                    }
                 });
                 artDropsGallery.dataset.downloadDelegated = 'true';
             }
+
+            magicEdenLookupBySymbolPromise.then(function(magicEdenLookupBySymbol) {
+                pendingMagicEdenBindings.forEach(function(binding) {
+                    ensureMagicEdenItemLink(binding.wrapper, binding.image, magicEdenLookupBySymbol);
+                });
+
+                galleries.forEach(function(gallery) {
+                    gallery.dispatchEvent(new Event('carousel:rebuild'));
+                });
+            }).catch(function(error) {
+                console.warn('Unable to attach Magic Eden item links:', error);
+            });
         });
+    </script>
+    <script>
+        (function() {
+            var MIN_LOADING_MS = 5000;
+            var overlay = document.getElementById('site-loading-overlay');
+            if (!overlay) return;
+
+            var body = document.body;
+            var root = document.documentElement;
+            var loadStart = (typeof window.__blokSpaceLoadStart === 'number')
+                ? window.__blokSpaceLoadStart
+                : ((window.performance && typeof window.performance.now === 'function') ? window.performance.now() : Date.now());
+
+            var minDurationComplete = false;
+            var pageFullyLoaded = document.readyState === 'complete';
+            var isDismissed = false;
+
+            function finalizeDismiss() {
+                if (isDismissed || !minDurationComplete || !pageFullyLoaded) return;
+                isDismissed = true;
+                overlay.classList.add('site-loading-overlay--hide');
+                root.classList.remove('is-loading-screen-active');
+                if (body) body.classList.remove('is-loading-screen-active');
+                window.setTimeout(function() {
+                    overlay.setAttribute('aria-hidden', 'true');
+                    overlay.remove();
+                }, 450);
+            }
+
+            var elapsed = (window.performance && typeof window.performance.now === 'function')
+                ? Math.max(0, window.performance.now() - loadStart)
+                : 0;
+            var remaining = Math.max(0, MIN_LOADING_MS - elapsed);
+
+            window.setTimeout(function() {
+                minDurationComplete = true;
+                finalizeDismiss();
+            }, remaining);
+
+            function markPageLoaded() {
+                pageFullyLoaded = true;
+                finalizeDismiss();
+            }
+
+            if (pageFullyLoaded) {
+                markPageLoaded();
+            } else {
+                window.addEventListener('load', markPageLoaded, { once: true });
+            }
+        })();
+    </script>
+    <script>
+        (function() {
+            var heading = document.querySelector('header h1');
+            if (!heading || heading.dataset.letterized === 'true') return;
+
+            var rawText = heading.getAttribute('data-text') || heading.textContent || '';
+            if (!rawText) return;
+
+            function seededNoise(seed) {
+                var value = Math.sin(seed * 12.9898) * 43758.5453;
+                return value - Math.floor(value);
+            }
+
+            var jitterVariants = ['h1-letter-jitter-a', 'h1-letter-jitter-b', 'h1-letter-jitter-c'];
+            heading.textContent = '';
+            var letterIndex = 0;
+
+            rawText.split(/(\s+)/).forEach(function(token) {
+                if (!token) return;
+
+                if (/^\s+$/.test(token)) {
+                    heading.appendChild(document.createTextNode(token));
+                    return;
+                }
+
+                var wordNode = document.createElement('span');
+                wordNode.className = 'h1-word';
+
+                Array.from(token).forEach(function(character) {
+                    var letterNode = document.createElement('span');
+                    letterNode.className = 'h1-letter';
+                    letterNode.textContent = character;
+
+                    var base = letterIndex + 1;
+                    var r1 = seededNoise(base * 1.17);
+                    var r2 = seededNoise(base * 2.31);
+                    var r3 = seededNoise(base * 3.73);
+                    var r4 = seededNoise(base * 5.21);
+                    var r5 = seededNoise(base * 7.97);
+                    var r6 = seededNoise(base * 11.09);
+                    var r7 = seededNoise(base * 13.37);
+                    var r8 = seededNoise(base * 17.23);
+                    var r9 = seededNoise(base * 19.61);
+
+                    letterNode.style.setProperty('--h1-index', String(letterIndex));
+                    letterNode.style.setProperty('--h1-jitter-name', jitterVariants[Math.floor(r1 * jitterVariants.length)]);
+                    letterNode.style.setProperty('--h1-jitter-duration', (1.2 + r2 * 2.8).toFixed(3) + 's');
+                    letterNode.style.setProperty('--h1-jitter-delay', (-r3 * 4.2).toFixed(3) + 's');
+                    letterNode.style.setProperty('--h1-flicker-duration', (2.7 + r4 * 5.1).toFixed(3) + 's');
+                    letterNode.style.setProperty('--h1-flicker-delay', (-r5 * 6.0).toFixed(3) + 's');
+                    letterNode.style.setProperty('--h1-jitter-amplitude', (0.8 + r6 * 3.2).toFixed(3));
+                    letterNode.style.setProperty('--h1-surge-duration', (3.6 + r7 * 4.4).toFixed(3) + 's');
+                    letterNode.style.setProperty('--h1-surge-delay', (-r8 * 7.2).toFixed(3) + 's');
+                    letterNode.style.setProperty('--h1-surge-intensity', (0.85 + r9 * 1.15).toFixed(3));
+
+                    wordNode.appendChild(letterNode);
+                    letterIndex += 1;
+                });
+
+                heading.appendChild(wordNode);
+            });
+
+            heading.dataset.letterized = 'true';
+        })();
+    </script>
+    <script>
+        (function() {
+            var background = document.querySelector('.grid-background');
+            if (!background || background.dataset.tronNodesReady === 'true') return;
+            background.dataset.tronNodesReady = 'true';
+
+            var layer = document.createElement('div');
+            layer.className = 'grid-node-layer';
+            background.appendChild(layer);
+
+            var nodes = [];
+            var width = 0;
+            var height = 0;
+            var playTop = 0;
+            var playHeight = 0;
+            var gridSize = 20;
+            var gridOffsetX = 0;
+            var gridOffsetY = 0;
+            var overscan = 180;
+            var lastTime = 0;
+            var rafId = 0;
+            var resizeTimer = 0;
+            var motionQuery = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+            var spawnEdgeBag = [];
+
+            function rand(min, max) {
+                return min + Math.random() * (max - min);
+            }
+
+            function snapToGrid(value, offset) {
+                return Math.round((value - offset) / gridSize) * gridSize + offset;
+            }
+
+            function snapX(value) {
+                return snapToGrid(value, gridOffsetX);
+            }
+
+            function snapY(value) {
+                return snapToGrid(value, gridOffsetY);
+            }
+
+            function randomGridLine(maxValue, offset) {
+                var normalizedMax = Math.max(0, maxValue);
+                var available = Math.floor((normalizedMax - offset) / gridSize) + 1;
+                if (available <= 0) {
+                    return offset;
+                }
+                return offset + (Math.floor(Math.random() * available) * gridSize);
+            }
+
+            function randomGridX() {
+                return randomGridLine(width, gridOffsetX);
+            }
+
+            function randomGridY() {
+                return randomGridLine(playHeight, gridOffsetY);
+            }
+
+            function chooseAxis() {
+                return Math.random() < 0.5 ? 'x' : 'y';
+            }
+
+            function chooseDir() {
+                return Math.random() < 0.5 ? -1 : 1;
+            }
+
+            function shuffleArray(values) {
+                var copy = values.slice();
+                for (var i = copy.length - 1; i > 0; i -= 1) {
+                    var j = Math.floor(Math.random() * (i + 1));
+                    var temp = copy[i];
+                    copy[i] = copy[j];
+                    copy[j] = temp;
+                }
+                return copy;
+            }
+
+            function nextSpawnEdge() {
+                if (spawnEdgeBag.length === 0) {
+                    spawnEdgeBag = shuffleArray(['left', 'right', 'top', 'bottom']);
+                }
+                return spawnEdgeBag.pop();
+            }
+
+            function readGridSize() {
+                var rawValue = getComputedStyle(background).getPropertyValue('--tron-cell');
+                var parsedValue = parseFloat(rawValue);
+                return parsedValue > 0 ? parsedValue : 20;
+            }
+
+            function updateNodeVisual(node) {
+                node.el.className = 'grid-tron-node axis-' + node.axis + ' ' + (node.dir > 0 ? 'dir-pos' : 'dir-neg');
+                node.el.style.setProperty('--trail', node.trail.toFixed(2) + 'px');
+                node.el.style.setProperty('--node-size', node.size.toFixed(2) + 'px');
+                node.el.style.setProperty('--node-alpha', node.alpha.toFixed(3));
+                node.el.style.setProperty('--node-hue', node.hue.toFixed(1));
+            }
+
+            function placeNode(node) {
+                node.el.style.left = node.x.toFixed(2) + 'px';
+                node.el.style.top = node.y.toFixed(2) + 'px';
+            }
+
+            function randomizeNodeStyle(node) {
+                node.trail = rand(gridSize * 3.2, gridSize * 12.2);
+                node.size = Math.random() < 0.5 ? 4 : 6;
+                node.alpha = rand(0.62, 0.98);
+                node.hue = rand(188, 205);
+            }
+
+            function respawnNode(node) {
+                var edge = nextSpawnEdge();
+
+                if (edge === 'left') {
+                    node.axis = 'x';
+                    node.dir = 1;
+                } else if (edge === 'right') {
+                    node.axis = 'x';
+                    node.dir = -1;
+                } else if (edge === 'top') {
+                    node.axis = 'y';
+                    node.dir = 1;
+                } else {
+                    node.axis = 'y';
+                    node.dir = -1;
+                }
+
+                node.speed = rand(82, 228);
+                node.turnChance = rand(0.06, 0.16);
+                node.turnCooldown = rand(3.0, 7.0);
+                randomizeNodeStyle(node);
+
+                if (edge === 'left') {
+                    node.y = randomGridY();
+                    node.x = -rand(gridSize * 2, overscan);
+                } else if (edge === 'right') {
+                    node.y = randomGridY();
+                    node.x = width + rand(gridSize * 2, overscan);
+                } else if (edge === 'top') {
+                    node.x = randomGridX();
+                    node.y = -rand(gridSize * 2, overscan);
+                } else {
+                    node.x = randomGridX();
+                    node.y = playHeight + rand(gridSize * 2, overscan);
+                }
+
+                if (node.axis === 'x') {
+                    node.y = randomGridY();
+                } else {
+                    node.x = randomGridX();
+                }
+
+                updateNodeVisual(node);
+                placeNode(node);
+            }
+
+            function maybeTurn(node, deltaSeconds) {
+                node.turnCooldown -= deltaSeconds;
+                if (node.turnCooldown > 0) return;
+                if (Math.random() > node.turnChance * deltaSeconds) return;
+
+                node.axis = node.axis === 'x' ? 'y' : 'x';
+                node.dir = chooseDir();
+                node.speed = Math.max(72, Math.min(250, node.speed * rand(0.86, 1.22)));
+                node.turnChance = rand(0.05, 0.17);
+                node.turnCooldown = rand(3.0, 8.0);
+
+                if (Math.random() < 0.45) {
+                    randomizeNodeStyle(node);
+                }
+
+                node.x = snapX(node.x);
+                node.y = snapY(node.y);
+
+                updateNodeVisual(node);
+                placeNode(node);
+            }
+
+            function createNode() {
+                var el = document.createElement('span');
+                layer.appendChild(el);
+
+                var node = {
+                    el: el,
+                    axis: 'x',
+                    dir: 1,
+                    x: 0,
+                    y: 0,
+                    speed: 0,
+                    turnChance: 0.1,
+                    turnCooldown: 1,
+                    trail: 40,
+                    size: 4,
+                    alpha: 0.75,
+                    hue: 196
+                };
+
+                respawnNode(node);
+                return node;
+            }
+
+            function setNodeCount() {
+                var targetCount = Math.max(44, Math.min(160, Math.round((width * playHeight) / 34000)));
+
+                while (nodes.length < targetCount) {
+                    nodes.push(createNode());
+                }
+                while (nodes.length > targetCount) {
+                    var removed = nodes.pop();
+                    removed.el.remove();
+                }
+            }
+
+            function rebuildBounds() {
+                gridSize = readGridSize();
+                width = Math.max(1, background.clientWidth);
+                height = Math.max(1, background.clientHeight);
+                var headerElement = document.querySelector('header');
+                playTop = headerElement ? Math.max(0, Math.round(headerElement.offsetHeight)) : 0;
+                playHeight = Math.max(1, height - playTop);
+                gridOffsetX = 0;
+                gridOffsetY = ((gridSize - (playTop % gridSize)) % gridSize);
+                spawnEdgeBag = [];
+
+                layer.style.top = playTop + 'px';
+                layer.style.height = playHeight + 'px';
+                layer.style.bottom = 'auto';
+                setNodeCount();
+
+                nodes.forEach(function(node) {
+                    node.trail = Math.max(gridSize * 1.1, node.trail);
+                    node.x = snapX(Math.max(-overscan, Math.min(width + overscan, node.x)));
+                    node.y = snapY(Math.max(-overscan, Math.min(playHeight + overscan, node.y)));
+                    updateNodeVisual(node);
+                    placeNode(node);
+                });
+            }
+
+            function tick(time) {
+                if (!lastTime) lastTime = time;
+                var deltaSeconds = Math.min(0.05, (time - lastTime) / 1000);
+                lastTime = time;
+
+                nodes.forEach(function(node) {
+                    if (node.axis === 'x') {
+                        node.x += node.speed * node.dir * deltaSeconds;
+                    } else {
+                        node.y += node.speed * node.dir * deltaSeconds;
+                    }
+
+                    maybeTurn(node, deltaSeconds);
+
+                    if (node.x < -overscan || node.x > width + overscan || node.y < -overscan || node.y > playHeight + overscan) {
+                        respawnNode(node);
+                    } else {
+                        placeNode(node);
+                    }
+                });
+
+                rafId = window.requestAnimationFrame(tick);
+            }
+
+            function start() {
+                if (rafId) return;
+                lastTime = 0;
+                rafId = window.requestAnimationFrame(tick);
+            }
+
+            function stop() {
+                if (!rafId) return;
+                window.cancelAnimationFrame(rafId);
+                rafId = 0;
+            }
+
+            function applyMotionPreference() {
+                if (motionQuery && motionQuery.matches) {
+                    stop();
+                    return;
+                }
+
+                rebuildBounds();
+                start();
+            }
+
+            function onResize() {
+                window.clearTimeout(resizeTimer);
+                resizeTimer = window.setTimeout(rebuildBounds, 120);
+            }
+
+            if (motionQuery) {
+                if (typeof motionQuery.addEventListener === 'function') {
+                    motionQuery.addEventListener('change', applyMotionPreference);
+                } else if (typeof motionQuery.addListener === 'function') {
+                    motionQuery.addListener(applyMotionPreference);
+                }
+            }
+
+            window.addEventListener('resize', onResize);
+            window.addEventListener('load', rebuildBounds, { once: true });
+
+            rebuildBounds();
+            applyMotionPreference();
+        })();
     </script>
 </body>
 </html>

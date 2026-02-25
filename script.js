@@ -45,16 +45,8 @@
             imageSelector: '.gallery-flex img'
         }
     ];
-
-    const metadataNameAliases = {
-        'palindrome-punks': {
-            'punk rocker': 'rocker'
-        },
-        'art-drops': {
-            'moon boi': 'lunatic',
-            'life is a beach': 'beach'
-        }
-    };
+    const magicEdenItemBaseUrl = 'https://magiceden.io/ordinals/item-details/';
+    const magicEdenIconPath = './Images/ME.png';
 
     function sanitizeOrdNodeBase(value) {
         const trimmed = String(value || '').trim();
@@ -289,15 +281,32 @@
         return sanitized || 'image';
     }
 
+    function getImageSourceUrl(img) {
+        return String(img?.currentSrc || img?.getAttribute?.('src') || img?.src || '').trim();
+    }
+
+    function getImageSourceExtension(img) {
+        const sourceUrl = getImageSourceUrl(img).split('#')[0].split('?')[0];
+        const extensionMatch = sourceUrl.match(/\.([a-z0-9]+)$/i);
+        return extensionMatch ? extensionMatch[1].toLowerCase() : '';
+    }
+
     function downloadUpscaledJpegFromImage(img, fileNameBase) {
         if (!img) return;
+        const upscaleFactor = 4;
+
+        if (getImageSourceExtension(img) === 'gif') {
+            const sourceUrl = getImageSourceUrl(img);
+            if (!sourceUrl) return;
+            downloadFileAsset(sourceUrl, `${sanitizeDownloadBaseName(fileNameBase)}.gif`);
+            return;
+        }
 
         const performDownload = function() {
             const sourceWidth = img.naturalWidth || img.width;
             const sourceHeight = img.naturalHeight || img.height;
             if (!sourceWidth || !sourceHeight) return;
 
-            const upscaleFactor = 4;
             const canvas = document.createElement('canvas');
             canvas.width = sourceWidth * upscaleFactor;
             canvas.height = sourceHeight * upscaleFactor;
@@ -335,9 +344,18 @@
         document.body.removeChild(link);
     }
 
+    function blurInteractiveControl(control) {
+        if (!control || typeof control.blur !== 'function') return;
+        control.blur();
+        setTimeout(() => control.blur(), 0);
+    }
+
     function createWalletResultCard(match) {
         const resultCard = document.createElement('div');
         resultCard.className = 'gallery-item';
+        const visualContainer = document.createElement('div');
+        visualContainer.className = 'gallery-item-visual';
+        resultCard.appendChild(visualContainer);
 
         const isBlokchainPreview = match.collectionSymbol === 'blokchain-surveillance';
         let image = null;
@@ -354,18 +372,18 @@
             frame.setAttribute('aria-hidden', 'true');
             frameCrop.appendChild(frame);
 
-            resultCard.appendChild(frameCrop);
+            visualContainer.appendChild(frameCrop);
         } else {
             image = document.createElement('img');
             image.src = match.imageSrc;
             image.alt = match.imageAlt || match.displayName;
-            resultCard.appendChild(image);
+            visualContainer.appendChild(image);
         }
 
         const titleFooter = document.createElement('div');
         titleFooter.className = 'image-title';
         titleFooter.textContent = match.displayName || match.inscriptionId;
-        resultCard.appendChild(titleFooter);
+        visualContainer.appendChild(titleFooter);
 
         const downloadButton = document.createElement('button');
         downloadButton.type = 'button';
@@ -376,17 +394,42 @@
             downloadButton.setAttribute('aria-label', 'Download HTML file');
             downloadButton.addEventListener('click', event => {
                 event.stopPropagation();
+                blurInteractiveControl(downloadButton);
                 downloadFileAsset('./Blokchain/index_blokchain.html', 'index_blokchain.html');
             });
         } else if (image) {
-            downloadButton.setAttribute('aria-label', 'Download upscaled JPEG');
+            downloadButton.setAttribute(
+                'aria-label',
+                getImageSourceExtension(image) === 'gif' ? 'Download original GIF' : 'Download upscaled JPEG'
+            );
             downloadButton.addEventListener('click', event => {
                 event.stopPropagation();
+                blurInteractiveControl(downloadButton);
                 downloadUpscaledJpegFromImage(image, match.displayName || match.inscriptionId);
             });
         }
 
-        resultCard.appendChild(downloadButton);
+        visualContainer.appendChild(downloadButton);
+
+        const normalizedInscriptionId = normalizeInscriptionId(match?.inscriptionId);
+        if (isLikelyInscriptionId(normalizedInscriptionId)) {
+            const magicEdenLink = document.createElement('a');
+            magicEdenLink.className = 'item-magic-eden-link';
+            magicEdenLink.href = `${magicEdenItemBaseUrl}${normalizedInscriptionId}`;
+            magicEdenLink.target = '_blank';
+            magicEdenLink.rel = 'noopener noreferrer';
+            magicEdenLink.style.backgroundImage = `url(${magicEdenIconPath})`;
+            magicEdenLink.title = 'View on Magic Eden';
+            magicEdenLink.setAttribute(
+                'aria-label',
+                `View ${match.displayName || normalizedInscriptionId} on Magic Eden`
+            );
+            magicEdenLink.addEventListener('click', event => {
+                event.stopPropagation();
+                blurInteractiveControl(magicEdenLink);
+            });
+            visualContainer.appendChild(magicEdenLink);
+        }
 
         return resultCard;
     }
@@ -422,12 +465,6 @@
         };
     }
 
-    function resolveMetadataAlias(collectionSymbol, name) {
-        const normalized = normalizeWalletText(name);
-        const collectionAliases = metadataNameAliases[collectionSymbol] || {};
-        return collectionAliases[normalized] || name;
-    }
-
     function resolveMetadataImage(collection, metadataEntry, imageLookup) {
         const metadataName = String(metadataEntry?.meta?.name || '').trim();
         const editionNumber = extractEditionNumber(metadataName);
@@ -435,9 +472,7 @@
             return imageLookup.byNumber.get(editionNumber);
         }
 
-        const aliasedName = resolveMetadataAlias(collection.symbol, metadataName);
         const candidateKeys = Array.from(new Set([
-            ...getNameCandidates(aliasedName),
             ...getNameCandidates(metadataName)
         ]));
 
@@ -811,6 +846,7 @@
     function initializeWalletSearch() {
         const walletSearchForm = document.getElementById('wallet-search-form');
         const walletSearchInput = document.getElementById('wallet-search-input');
+        const walletSearchSpinner = document.getElementById('wallet-search-spinner');
         const walletSearchStatus = document.getElementById('wallet-search-status');
         const walletSearchResults = document.getElementById('wallet-search-results');
 
@@ -820,10 +856,27 @@
         let walletIndexPromise = null;
         let autoSearchTimer = null;
         let searchSequence = 0;
+        let loadingSearchSequence = 0;
 
         const resetWalletResults = function() {
             walletSearchResults.hidden = true;
             walletSearchResults.replaceChildren();
+        };
+
+        const setWalletSearchLoading = function(isLoading, sequence) {
+            if (!walletSearchSpinner) return;
+
+            if (isLoading) {
+                loadingSearchSequence = typeof sequence === 'number' ? sequence : loadingSearchSequence;
+                walletSearchSpinner.classList.add('is-active');
+                walletSearchSpinner.setAttribute('aria-hidden', 'false');
+                return;
+            }
+
+            if (typeof sequence === 'number' && loadingSearchSequence !== sequence) return;
+            loadingSearchSequence = 0;
+            walletSearchSpinner.classList.remove('is-active');
+            walletSearchSpinner.setAttribute('aria-hidden', 'true');
         };
 
         const setOrdNodeStatus = function() {
@@ -860,6 +913,7 @@
 
         const runWalletLookup = async function(address) {
             if (!ordNodeBase) {
+                setWalletSearchLoading(false);
                 resetWalletResults();
                 setWalletStatus(walletSearchStatus, 'Ord node URL is not configured. Set data-ord-node-base on the <body> element.', true);
                 return;
@@ -868,7 +922,8 @@
             const currentAddress = String(address || '').trim();
             const currentSearchSequence = ++searchSequence;
             resetWalletResults();
-            setWalletStatus(walletSearchStatus, `Checking ${ordNodeBase}/address/${currentAddress} and cross-referencing metadata...`, false);
+            setWalletSearchLoading(true, currentSearchSequence);
+            setWalletStatus(walletSearchStatus, '', false);
 
             try {
                 const [{ collectionIndexes, byInscriptionId }, { inscriptionIds }] = await Promise.all([
@@ -909,9 +964,12 @@
                     true
                 );
                 console.error('Wallet collection search failed:', error);
+            } finally {
+                setWalletSearchLoading(false, currentSearchSequence);
             }
         };
 
+        setWalletSearchLoading(false);
         setOrdNodeStatus();
 
         walletSearchInput.addEventListener('input', () => {
@@ -924,6 +982,7 @@
 
             if (!address) {
                 searchSequence += 1;
+                setWalletSearchLoading(false);
                 resetWalletResults();
                 setOrdNodeStatus();
                 return;
@@ -931,6 +990,7 @@
 
             if (!isValidBitcoinAddress(address)) {
                 searchSequence += 1;
+                setWalletSearchLoading(false);
                 resetWalletResults();
                 setWalletStatus(walletSearchStatus, 'Enter a valid Bitcoin wallet address.', false);
                 return;
@@ -955,12 +1015,14 @@
             const address = walletSearchInput.value.trim();
             if (!address) {
                 searchSequence += 1;
+                setWalletSearchLoading(false);
                 resetWalletResults();
                 setOrdNodeStatus();
                 return;
             }
             if (!isValidBitcoinAddress(address)) {
                 searchSequence += 1;
+                setWalletSearchLoading(false);
                 resetWalletResults();
                 setWalletStatus(walletSearchStatus, 'Enter a valid Bitcoin wallet address.', true);
                 return;
