@@ -1924,15 +1924,27 @@ iframe {
     }
 
     header h1 .h1-letter {
-        animation: none;
+        animation-name: h1-letter-flicker, h1-letter-static-surge;
+        animation-duration: calc(var(--h1-flicker-duration, 5.1s) * 1.55), calc(var(--h1-surge-duration, 4.8s) * 1.45);
+        animation-timing-function: steps(1, end), steps(1, end);
+        animation-iteration-count: infinite, infinite;
+        animation-delay: var(--h1-flicker-delay, 0s), calc(var(--h1-surge-delay, 0s) + (var(--h1-index, 0) * 0.08s));
         transform: none;
         opacity: 1;
         filter: none;
-        will-change: auto;
+        will-change: opacity, filter;
     }
 
-    header h1::before,
-    header h1::after,
+    header h1::before {
+        animation: h1-static-sweep 8.8s infinite steps(1, end);
+        filter: drop-shadow(0 0 4px rgba(190, 243, 255, 0.7)) drop-shadow(0 0 10px rgba(115, 220, 255, 0.45));
+    }
+
+    header h1::after {
+        animation: h1-static-noise 7.9s infinite steps(1, end);
+        filter: blur(0.15px) drop-shadow(0 0 3px rgba(173, 236, 255, 0.65));
+    }
+
     h2::before,
     h2::after {
         animation: none;

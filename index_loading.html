@@ -168,10 +168,14 @@
       animation-duration: 1.2s;
     }
 
-    body.loading-lite .loading-text.glitching::before,
+    body.loading-lite .loading-text.glitching::before {
+      animation: glitch-a 1.2s infinite steps(1, end);
+      opacity: 0.46;
+    }
+
     body.loading-lite .loading-text.glitching::after {
-      animation: none;
-      opacity: 0;
+      animation: glitch-b 1.06s infinite steps(1, end);
+      opacity: 0.42;
     }
 
   </style>
@@ -185,14 +189,15 @@
 
   <script>
     const canvas = document.getElementById("matrix");
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d", { alpha: false });
+    const reducedMotionQuery = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
     const coarsePointerQuery = window.matchMedia ? window.matchMedia("(pointer: coarse)") : null;
     const narrowViewportQuery = window.matchMedia ? window.matchMedia("(max-width: 900px)") : null;
     const pixelRatio = window.devicePixelRatio || 1;
     let constrainedDevice = false;
     let matrixEnabled = true;
     let fontSize = 18;
-    let matrixFrameIntervalMs = 16;
+    let matrixFrameIntervalMs = 24;
     let lastMatrixPaintTime = 0;
     const glyphs = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<>$#@%&";
     let columns = 0;
@@ -202,7 +207,8 @@
 
     function isConstrainedDevice() {
       return Boolean(
-        (coarsePointerQuery && coarsePointerQuery.matches)
+        (reducedMotionQuery && reducedMotionQuery.matches)
+        || (coarsePointerQuery && coarsePointerQuery.matches)
         || (narrowViewportQuery && narrowViewportQuery.matches)
         || pixelRatio >= 2.5
       );
@@ -227,7 +233,7 @@
       canvas.width = Math.max(1, Math.floor(window.innerWidth * renderScale));
       canvas.height = Math.max(1, Math.floor(window.innerHeight * renderScale));
       fontSize = constrainedDevice ? 22 : 18;
-      matrixFrameIntervalMs = constrainedDevice ? 48 : 16;
+      matrixFrameIntervalMs = constrainedDevice ? 54 : 24;
       lastMatrixPaintTime = 0;
       columns = Math.ceil(canvas.width / fontSize);
       drops = Array.from({ length: columns }, () => Math.random() * (canvas.height / fontSize));
@@ -318,7 +324,7 @@
 
       setLoadingText(message);
       loadingText.classList.add("done");
-      if (!constrainedDevice) {
+      if (!(reducedMotionQuery && reducedMotionQuery.matches)) {
         loadingText.classList.add("glitching");
       }
     }
