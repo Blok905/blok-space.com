@@ -1767,21 +1767,36 @@
 
         input.addEventListener('input', applyGalleryFilters);
 
-        if (supportsTraitFilters) {
-            traitFilterToggleNode.addEventListener('click', () => {
-                setTraitFilterWindowExpanded(!traitFilterIsExpanded);
-            });
-            setTraitFilterWindowExpanded(false);
+        let traitFilterLoadPromise = null;
 
-            loadTraitFilterData(gridSymbol)
+        function ensureTraitFilterDataLoaded() {
+            if (!supportsTraitFilters) return Promise.resolve(null);
+            if (traitFilterLoadPromise) return traitFilterLoadPromise;
+
+            traitFilterLoadPromise = loadTraitFilterData(gridSymbol)
                 .then(loadedTraitData => {
                     buildTraitFilterControls(loadedTraitData);
                     applyGalleryFilters();
+                    return loadedTraitData;
                 })
                 .catch(error => {
                     setTraitFilterStatus('Trait filters are unavailable right now.', true);
                     console.error(`Trait filter load failed (${gridSymbol}):`, error);
+                    throw error;
                 });
+
+            return traitFilterLoadPromise;
+        }
+
+        if (supportsTraitFilters) {
+            traitFilterToggleNode.addEventListener('click', () => {
+                const nextExpandedState = !traitFilterIsExpanded;
+                setTraitFilterWindowExpanded(nextExpandedState);
+                if (nextExpandedState) {
+                    void ensureTraitFilterDataLoaded();
+                }
+            });
+            setTraitFilterWindowExpanded(false);
         }
     });
 

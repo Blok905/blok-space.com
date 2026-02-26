@@ -8,9 +8,6 @@
   <style>
     @import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&display=swap");
     :root {
-      --eye-size: clamp(70px, min(31vw, 31vh), 230px);
-      --pupil-size: calc(var(--eye-size) * 0.46);
-      --stack-gap: clamp(14px, 3.2vmin, 28px);
       --text-size: clamp(19px, 3.57vmin, 48px);
       --cypher-green: #ff7a00;
     }
@@ -43,72 +40,15 @@
       z-index: 0;
     }
 
-    .eye-stage {
+    .loading-stage {
       position: relative;
       z-index: 1;
       display: flex;
-      flex-direction: column;
+      justify-content: center;
       align-items: center;
-      gap: var(--stack-gap);
       padding: clamp(12px, 3.2vw, 28px);
-      width: min(94vw, 94vh, 760px);
-    }
-
-    .eye {
-      width: min(var(--eye-size), 100%);
-      aspect-ratio: 1;
-      border-radius: 50%;
-      position: relative;
-      display: grid;
-      place-items: center;
-      overflow: hidden;
-      cursor: pointer;
-      touch-action: manipulation;
-      background: radial-gradient(circle, #ff9b42 32%, #ff4e00 76%, #6e1e00 100%);
-      box-shadow:
-        0 0 24px rgba(255, 110, 0, 0.6),
-        0 0 52px rgba(255, 70, 0, 0.45),
-        0 0 92px rgba(255, 50, 0, 0.28);
-    }
-
-    .pupil {
-      width: var(--pupil-size);
-      aspect-ratio: 1;
-      border-radius: 50%;
-      position: absolute;
-      background: radial-gradient(circle at center, #000 0%, #4d0000 100%);
-      box-shadow: 0 0 16px rgba(0, 0, 0, 0.88);
-      transition: transform 0.06s linear;
-      will-change: transform;
-    }
-
-    .top-eyelid,
-    .bottom-eyelid {
-      position: absolute;
-      left: 0;
       width: 100%;
-      height: 50%;
-      pointer-events: none;
-      transition: transform 0.18s ease-in-out;
-    }
-
-    .top-eyelid {
-      top: 0;
-      transform: translateY(-102%);
-      background: linear-gradient(to bottom, rgba(0, 0, 0, 0.96), rgba(0, 0, 0, 0.72));
-      box-shadow: inset 0 10px 16px rgba(255, 255, 255, 0.08);
-    }
-
-    .bottom-eyelid {
-      bottom: 0;
-      transform: translateY(102%);
-      background: linear-gradient(to top, rgba(0, 0, 0, 0.96), rgba(0, 0, 0, 0.72));
-      box-shadow: inset 0 -10px 16px rgba(255, 255, 255, 0.08);
-    }
-
-    .eye.blink .top-eyelid,
-    .eye.blink .bottom-eyelid {
-      transform: translateY(0);
+      min-height: 100vh;
     }
 
     .loading-text {
@@ -222,12 +162,7 @@
 <body>
   <canvas id="matrix"></canvas>
 
-  <div class="eye-stage">
-    <div class="eye" id="surveillanceEye" aria-label="Surveillance eye" role="button" tabindex="0">
-      <div class="pupil" id="pupil"></div>
-      <div class="top-eyelid"></div>
-      <div class="bottom-eyelid"></div>
-    </div>
+  <div class="loading-stage">
     <div id="loadingText" class="loading-text" data-text="" aria-live="polite"></div>
   </div>
 
@@ -239,6 +174,7 @@
     let columns = 0;
     let drops = [];
     let speeds = [];
+    let matrixRafId = 0;
 
     function resetMatrix() {
       canvas.width = window.innerWidth;
@@ -268,52 +204,33 @@
         }
       }
 
-      requestAnimationFrame(drawMatrix);
+      matrixRafId = requestAnimationFrame(drawMatrix);
+    }
+
+    function startMatrixLoop() {
+      if (matrixRafId !== 0) return;
+      matrixRafId = requestAnimationFrame(drawMatrix);
+    }
+
+    function stopMatrixLoop() {
+      if (matrixRafId === 0) return;
+      cancelAnimationFrame(matrixRafId);
+      matrixRafId = 0;
     }
 
     resetMatrix();
-    drawMatrix();
     window.addEventListener("resize", resetMatrix);
 
-    const eye = document.getElementById("surveillanceEye");
-    const pupil = document.getElementById("pupil");
     const loadingText = document.getElementById("loadingText");
     const message = "LOADING BLOK SPACE...";
     const scramble = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#$%";
 
-    const pointer = {
-      x: window.innerWidth / 2,
-      y: window.innerHeight / 2
-    };
-
-    let blinkTimeout;
-
-    function blinkEye() {
-      eye.classList.remove("blink");
-      void eye.offsetWidth;
-      eye.classList.add("blink");
-      clearTimeout(blinkTimeout);
-      blinkTimeout = setTimeout(() => {
-        eye.classList.remove("blink");
-      }, 260);
-    }
-
-    function updatePointer(event) {
-      pointer.x = event.clientX;
-      pointer.y = event.clientY;
-    }
-
-    function trackPointer() {
-      const rect = eye.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
-      const dx = pointer.x - centerX;
-      const dy = pointer.y - centerY;
-      const angle = Math.atan2(dy, dx);
-      const distance = Math.min(rect.width * 0.17, Math.hypot(dx, dy) * 0.2);
-
-      pupil.style.transform = `translate(${Math.cos(angle) * distance}px, ${Math.sin(angle) * distance}px)`;
-      requestAnimationFrame(trackPointer);
+    function updateAnimationVisibility() {
+      if (document.hidden) {
+        stopMatrixLoop();
+        return;
+      }
+      startMatrixLoop();
     }
 
     function setLoadingText(value) {
@@ -341,18 +258,12 @@
       loadingText.classList.add("done", "glitching");
     }
 
-    eye.addEventListener("click", blinkEye);
-    eye.addEventListener("keydown", (event) => {
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        blinkEye();
-      }
-    });
+    document.addEventListener("visibilitychange", updateAnimationVisibility);
+    window.addEventListener("pagehide", () => {
+      stopMatrixLoop();
+    }, { once: true });
 
-    window.addEventListener("pointermove", updatePointer, { passive: true });
-    window.addEventListener("pointerdown", updatePointer, { passive: true });
-
-    trackPointer();
+    updateAnimationVisibility();
     typeLoadingText();
   </script>
 </body>
