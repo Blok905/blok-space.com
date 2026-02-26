@@ -86,7 +86,7 @@ body {
     width: 0;
     height: 0;
     pointer-events: none;
-    will-change: left, top;
+    will-change: transform;
 }
 
 .grid-tron-node::before,
@@ -1540,6 +1540,14 @@ footer p {
     50% { transform: scale(0.86); opacity: 1; }
 }
 
+@keyframes eyeDriftLite {
+    0%,
+    100% { transform: translate3d(0, 0, 0); }
+    25% { transform: translate3d(0.8px, -0.6px, 0); }
+    50% { transform: translate3d(-1px, 0.7px, 0); }
+    75% { transform: translate3d(0.6px, 0.5px, 0); }
+}
+
 #curves .outer-eye {
     position: relative;
     display: flex;
@@ -1642,6 +1650,8 @@ footer p {
     width: 43%;
     border: solid 1px rgba(149, 227, 255, 0.72);
     border-radius: 50%;
+    overflow: hidden;
+    isolation: isolate;
     background: radial-gradient(circle at 36% 30%, #20303c 0%, #02060a 42%, #000 78%);
     box-shadow:
         0 0 0 2px rgba(5, 14, 26, 0.82),
@@ -1890,6 +1900,80 @@ iframe {
 
     .trait-filter-select {
         min-width: 0;
+    }
+}
+
+@media (max-width: 900px), (pointer: coarse) {
+    .grid-background {
+        --tron-cell: 22px;
+    }
+
+    .grid-node-layer {
+        display: none;
+    }
+
+    .grid-tron-node::before {
+        opacity: 0.7;
+        box-shadow:
+            0 0 6px rgba(136, 240, 255, 0.58),
+            0 0 14px rgba(74, 214, 255, 0.44);
+    }
+
+    .grid-tron-node::after {
+        box-shadow: 0 0 6px hsl(var(--node-hue, 196) 100% 78% / 0.72);
+    }
+
+    header h1 .h1-letter {
+        animation: none;
+        transform: none;
+        opacity: 1;
+        filter: none;
+        will-change: auto;
+    }
+
+    header h1::before,
+    header h1::after,
+    h2::before,
+    h2::after {
+        animation: none;
+        opacity: 0;
+        clip-path: inset(0 0 0 0);
+        filter: none;
+        mix-blend-mode: normal;
+    }
+
+    #curves .outer-eye,
+    #curves .mid-eye,
+    #curves .inner-eye {
+        box-shadow:
+            0 0 10px rgba(95, 221, 255, 0.36),
+            inset 0 0 12px rgba(4, 20, 38, 0.65);
+    }
+
+    #curves .mid-eye::before {
+        content: none;
+    }
+
+    #curves .inner-eye {
+        animation: eyeDriftLite 6.4s ease-in-out infinite;
+        transform: translate3d(0, 0, 0);
+        will-change: transform;
+    }
+
+    #curves .inner-eye::before {
+        content: none;
+    }
+
+    #curves .pupil {
+        animation: eyeDriftLite 4.8s ease-in-out infinite;
+        transform: translate3d(0, 0, 0);
+        background: radial-gradient(circle at 36% 30%, #24384a 0%, #071019 42%, #010204 78%);
+        box-shadow:
+            0 0 0 1px rgba(5, 14, 26, 0.86),
+            inset 0 0 10px rgba(179, 238, 255, 0.11),
+            0 0 9px rgba(86, 224, 255, 0.34);
+        -webkit-mask-image: -webkit-radial-gradient(white, black);
+        mask-image: radial-gradient(circle, #fff 97%, rgba(255, 255, 255, 0) 100%);
     }
 }
 

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Blok Space</title>
-    <link rel="stylesheet" href="styles.css?v=20260225-14">
+    <link rel="stylesheet" href="styles.css?v=20260226-01">
     <link rel="icon" href="/Images/Surveillance.png">
     <script>
         window.__blokSpaceLoadStart = (window.performance && typeof window.performance.now === 'function')
@@ -46,7 +46,7 @@
 </head>
 <body class="is-loading-screen-active">
     <div id="site-loading-overlay" role="status" aria-live="polite" aria-label="Loading Blok Space">
-        <iframe id="site-loading-frame" src="./index_loading.html" title="Blok Space loading screen" loading="eager"></iframe>
+        <iframe id="site-loading-frame" src="./index_loading.html?v=20260226-01" title="Blok Space loading screen" loading="eager"></iframe>
     </div>
     <div class="grid-background"></div>
     <header>
@@ -1168,7 +1168,12 @@
     </script>
     <script>
         (function() {
-            var MIN_LOADING_MS = 5000;
+            var constrainedDevice = window.matchMedia && (
+                window.matchMedia('(prefers-reduced-motion: reduce)').matches
+                || window.matchMedia('(pointer: coarse)').matches
+                || window.matchMedia('(max-width: 900px)').matches
+            );
+            var MIN_LOADING_MS = constrainedDevice ? 1800 : 5000;
             var overlay = document.getElementById('site-loading-overlay');
             if (!overlay) return;
 
@@ -1220,6 +1225,15 @@
         (function() {
             var heading = document.querySelector('header h1');
             if (!heading || heading.dataset.letterized === 'true') return;
+            var constrainedDevice = window.matchMedia && (
+                window.matchMedia('(prefers-reduced-motion: reduce)').matches
+                || window.matchMedia('(pointer: coarse)').matches
+                || window.matchMedia('(max-width: 900px)').matches
+            );
+            if (constrainedDevice) {
+                heading.dataset.letterized = 'true';
+                return;
+            }
 
             var rawText = heading.getAttribute('data-text') || heading.textContent || '';
             if (!rawText) return;
@@ -1285,6 +1299,16 @@
         (function() {
             var background = document.querySelector('.grid-background');
             if (!background || background.dataset.tronNodesReady === 'true') return;
+            var disableTronNodes = window.matchMedia && (
+                window.matchMedia('(prefers-reduced-motion: reduce)').matches
+                || window.matchMedia('(pointer: coarse)').matches
+                || window.matchMedia('(max-width: 900px)').matches
+            );
+            if (disableTronNodes) {
+                background.dataset.tronNodesReady = 'true';
+                background.classList.add('grid-background--static');
+                return;
+            }
             background.dataset.tronNodesReady = 'true';
 
             var layer = document.createElement('div');
@@ -1304,7 +1328,11 @@
             var rafId = 0;
             var resizeTimer = 0;
             var motionQuery = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+            var coarsePointerQuery = window.matchMedia ? window.matchMedia('(pointer: coarse)') : null;
+            var narrowViewportQuery = window.matchMedia ? window.matchMedia('(max-width: 900px)') : null;
             var spawnEdgeBag = [];
+            var constrainedFrameMs = 0;
+            var lastStepTime = 0;
 
             function rand(min, max) {
                 return min + Math.random() * (max - min);
@@ -1365,6 +1393,13 @@
                 return spawnEdgeBag.pop();
             }
 
+            function isPerformanceConstrained() {
+                return Boolean(
+                    (coarsePointerQuery && coarsePointerQuery.matches)
+                    || (narrowViewportQuery && narrowViewportQuery.matches)
+                );
+            }
+
             function readGridSize() {
                 var rawValue = getComputedStyle(background).getPropertyValue('--tron-cell');
                 var parsedValue = parseFloat(rawValue);
@@ -1380,14 +1415,14 @@
             }
 
             function placeNode(node) {
-                node.el.style.left = node.x.toFixed(2) + 'px';
-                node.el.style.top = node.y.toFixed(2) + 'px';
+                node.el.style.transform = 'translate3d(' + node.x.toFixed(2) + 'px, ' + node.y.toFixed(2) + 'px, 0)';
             }
 
             function randomizeNodeStyle(node) {
-                node.trail = rand(gridSize * 3.2, gridSize * 12.2);
-                node.size = Math.random() < 0.5 ? 4 : 6;
-                node.alpha = rand(0.62, 0.98);
+                var constrained = isPerformanceConstrained();
+                node.trail = constrained ? rand(gridSize * 2.4, gridSize * 7.4) : rand(gridSize * 3.2, gridSize * 12.2);
+                node.size = constrained ? (Math.random() < 0.75 ? 3 : 4) : (Math.random() < 0.5 ? 4 : 6);
+                node.alpha = constrained ? rand(0.54, 0.86) : rand(0.62, 0.98);
                 node.hue = rand(188, 205);
             }
 
@@ -1408,9 +1443,10 @@
                     node.dir = -1;
                 }
 
-                node.speed = rand(82, 228);
-                node.turnChance = rand(0.06, 0.16);
-                node.turnCooldown = rand(3.0, 7.0);
+                var constrained = isPerformanceConstrained();
+                node.speed = constrained ? rand(52, 132) : rand(82, 228);
+                node.turnChance = constrained ? rand(0.03, 0.08) : rand(0.06, 0.16);
+                node.turnCooldown = constrained ? rand(4.5, 9.5) : rand(3.0, 7.0);
                 randomizeNodeStyle(node);
 
                 if (edge === 'left') {
@@ -1442,13 +1478,16 @@
                 if (node.turnCooldown > 0) return;
                 if (Math.random() > node.turnChance * deltaSeconds) return;
 
+                var constrained = isPerformanceConstrained();
                 node.axis = node.axis === 'x' ? 'y' : 'x';
                 node.dir = chooseDir();
-                node.speed = Math.max(72, Math.min(250, node.speed * rand(0.86, 1.22)));
-                node.turnChance = rand(0.05, 0.17);
-                node.turnCooldown = rand(3.0, 8.0);
+                node.speed = constrained
+                    ? Math.max(46, Math.min(152, node.speed * rand(0.9, 1.12)))
+                    : Math.max(72, Math.min(250, node.speed * rand(0.86, 1.22)));
+                node.turnChance = constrained ? rand(0.03, 0.09) : rand(0.05, 0.17);
+                node.turnCooldown = constrained ? rand(4.0, 9.0) : rand(3.0, 8.0);
 
-                if (Math.random() < 0.45) {
+                if (Math.random() < (constrained ? 0.2 : 0.45)) {
                     randomizeNodeStyle(node);
                 }
 
@@ -1461,6 +1500,8 @@
 
             function createNode() {
                 var el = document.createElement('span');
+                el.style.left = '0px';
+                el.style.top = '0px';
                 layer.appendChild(el);
 
                 var node = {
@@ -1483,7 +1524,10 @@
             }
 
             function setNodeCount() {
-                var targetCount = Math.max(44, Math.min(160, Math.round((width * playHeight) / 34000)));
+                var constrained = isPerformanceConstrained();
+                var targetCount = constrained
+                    ? Math.max(14, Math.min(48, Math.round((width * playHeight) / 68000)))
+                    : Math.max(44, Math.min(160, Math.round((width * playHeight) / 34000)));
 
                 while (nodes.length < targetCount) {
                     nodes.push(createNode());
@@ -1498,6 +1542,7 @@
                 gridSize = readGridSize();
                 width = Math.max(1, background.clientWidth);
                 height = Math.max(1, background.clientHeight);
+                constrainedFrameMs = isPerformanceConstrained() ? 34 : 0;
                 var headerElement = document.querySelector('header');
                 playTop = headerElement ? Math.max(0, Math.round(headerElement.offsetHeight)) : 0;
                 playHeight = Math.max(1, height - playTop);
@@ -1520,6 +1565,15 @@
             }
 
             function tick(time) {
+                if (constrainedFrameMs > 0 && lastStepTime && (time - lastStepTime) < constrainedFrameMs) {
+                    rafId = window.requestAnimationFrame(tick);
+                    return;
+                }
+
+                if (constrainedFrameMs > 0) {
+                    lastStepTime = time;
+                }
+
                 if (!lastTime) lastTime = time;
                 var deltaSeconds = Math.min(0.05, (time - lastTime) / 1000);
                 lastTime = time;
@@ -1546,6 +1600,7 @@
             function start() {
                 if (rafId) return;
                 lastTime = 0;
+                lastStepTime = 0;
                 rafId = window.requestAnimationFrame(tick);
             }
 
@@ -1575,6 +1630,22 @@
                     motionQuery.addEventListener('change', applyMotionPreference);
                 } else if (typeof motionQuery.addListener === 'function') {
                     motionQuery.addListener(applyMotionPreference);
+                }
+            }
+
+            if (coarsePointerQuery) {
+                if (typeof coarsePointerQuery.addEventListener === 'function') {
+                    coarsePointerQuery.addEventListener('change', applyMotionPreference);
+                } else if (typeof coarsePointerQuery.addListener === 'function') {
+                    coarsePointerQuery.addListener(applyMotionPreference);
+                }
+            }
+
+            if (narrowViewportQuery) {
+                if (typeof narrowViewportQuery.addEventListener === 'function') {
+                    narrowViewportQuery.addEventListener('change', applyMotionPreference);
+                } else if (typeof narrowViewportQuery.addListener === 'function') {
+                    narrowViewportQuery.addListener(applyMotionPreference);
                 }
             }
 
