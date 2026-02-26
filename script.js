@@ -48,24 +48,6 @@
     const magicEdenItemBaseUrl = 'https://magiceden.io/ordinals/item-details/';
     const magicEdenIconPath = './Images/ME.png';
 
-    function runAfterOverlayDismiss(task) {
-        const runTask = () => {
-            if ('requestIdleCallback' in window) {
-                window.requestIdleCallback(() => task(), { timeout: 1200 });
-                return;
-            }
-            window.setTimeout(task, 0);
-        };
-
-        const overlay = document.getElementById('site-loading-overlay');
-        if (!overlay || overlay.classList.contains('site-loading-overlay--hide') || overlay.getAttribute('aria-hidden') === 'true') {
-            runTask();
-            return;
-        }
-
-        window.addEventListener('blokspace:loading-overlay-hidden', runTask, { once: true });
-    }
-
     function sanitizeOrdNodeBase(value) {
         const trimmed = String(value || '').trim();
         if (!trimmed) return '';
@@ -1458,14 +1440,13 @@
         }
     }
 
-    runAfterOverlayDismiss(function() {
-        initializeWalletSearch();
+    initializeWalletSearch();
 
-        // Gallery-grid search: inject an <input> before each grid.
-        // Matching results are moved below the search bar while searching.
-        let traitFilterWindowCounter = 0;
+    // Gallery-grid search: inject an <input> before each grid.
+    // Matching results are moved below the search bar while searching.
+    let traitFilterWindowCounter = 0;
 
-        document.querySelectorAll('.gallery-grid').forEach(grid => {
+    document.querySelectorAll('.gallery-grid').forEach(grid => {
         const input = document.createElement('input');
         input.type = 'text';
         input.placeholder = 'Search by Collection ID';
@@ -1817,16 +1798,15 @@
             });
             setTraitFilterWindowExpanded(false);
         }
-        });
+    });
 
-        // Some collections use non-grid layouts (iframe/flex). Keep the marketplace
-        // link directly above media by placing stats just above that link.
-        ['blokchain-surveillance', 'art-drops'].forEach(collectionSymbol => {
-            const statsWindow = document.querySelector(`.collection-stats-window[data-collection-symbol="${collectionSymbol}"]`);
-            const marketplaceLink = document.querySelector(`a[href*="/marketplace/${collectionSymbol}"]`);
-            if (!statsWindow || !marketplaceLink) return;
-            marketplaceLink.insertAdjacentElement('beforebegin', statsWindow);
-            statsWindow.classList.remove('collection-stats-window--hero');
-        });
+    // Some collections use non-grid layouts (iframe/flex). Keep the marketplace
+    // link directly above media by placing stats just above that link.
+    ['blokchain-surveillance', 'art-drops'].forEach(collectionSymbol => {
+        const statsWindow = document.querySelector(`.collection-stats-window[data-collection-symbol="${collectionSymbol}"]`);
+        const marketplaceLink = document.querySelector(`a[href*="/marketplace/${collectionSymbol}"]`);
+        if (!statsWindow || !marketplaceLink) return;
+        marketplaceLink.insertAdjacentElement('beforebegin', statsWindow);
+        statsWindow.classList.remove('collection-stats-window--hero');
     });
 });
