@@ -1540,6 +1540,14 @@ footer p {
     50% { transform: scale(0.86); opacity: 1; }
 }
 
+@keyframes eyeDriftLite {
+    0%,
+    100% { transform: translate3d(0, 0, 0); }
+    25% { transform: translate3d(0.8px, -0.6px, 0); }
+    50% { transform: translate3d(-1px, 0.7px, 0); }
+    75% { transform: translate3d(0.6px, 0.5px, 0); }
+}
+
 #curves .outer-eye {
     position: relative;
     display: flex;
@@ -1900,6 +1908,10 @@ iframe {
         --tron-cell: 22px;
     }
 
+    .grid-node-layer {
+        display: none;
+    }
+
     .grid-tron-node::before {
         opacity: 0.7;
         box-shadow:
@@ -1939,29 +1951,29 @@ iframe {
     }
 
     #curves .mid-eye::before {
-        opacity: 0.24;
-        background:
-            repeating-linear-gradient(180deg, rgba(157, 225, 255, 0.08) 0 2px, rgba(8, 20, 35, 0.16) 2px 4px);
+        content: none;
     }
 
     #curves .inner-eye {
-        animation: none;
-        transform: none;
+        animation: eyeDriftLite 6.4s ease-in-out infinite;
+        transform: translate3d(0, 0, 0);
+        will-change: transform;
     }
 
     #curves .inner-eye::before {
-        opacity: 0.62;
-        mix-blend-mode: normal;
+        content: none;
     }
 
     #curves .pupil {
-        animation: none;
-        transform: none;
+        animation: eyeDriftLite 4.8s ease-in-out infinite;
+        transform: translate3d(0, 0, 0);
         background: radial-gradient(circle at 36% 30%, #24384a 0%, #071019 42%, #010204 78%);
         box-shadow:
             0 0 0 1px rgba(5, 14, 26, 0.86),
             inset 0 0 10px rgba(179, 238, 255, 0.11),
             0 0 9px rgba(86, 224, 255, 0.34);
+        -webkit-mask-image: -webkit-radial-gradient(white, black);
+        mask-image: radial-gradient(circle, #fff 97%, rgba(255, 255, 255, 0) 100%);
     }
 }
 

@@ -40,6 +40,10 @@
       z-index: 0;
     }
 
+    body.loading-lite #matrix {
+      display: none;
+    }
+
     .loading-stage {
       position: relative;
       z-index: 1;
@@ -186,6 +190,7 @@
     const narrowViewportQuery = window.matchMedia ? window.matchMedia("(max-width: 900px)") : null;
     const pixelRatio = window.devicePixelRatio || 1;
     let constrainedDevice = false;
+    let matrixEnabled = true;
     let fontSize = 18;
     let matrixFrameIntervalMs = 16;
     let lastMatrixPaintTime = 0;
@@ -205,7 +210,18 @@
 
     function resetMatrix() {
       constrainedDevice = isConstrainedDevice();
+      matrixEnabled = !constrainedDevice;
       document.body.classList.toggle("loading-lite", constrainedDevice);
+
+      if (!matrixEnabled) {
+        stopMatrixLoop();
+        canvas.width = 1;
+        canvas.height = 1;
+        columns = 0;
+        drops = [];
+        speeds = [];
+        return;
+      }
 
       const renderScale = constrainedDevice ? 0.62 : 1;
       canvas.width = Math.max(1, Math.floor(window.innerWidth * renderScale));
@@ -219,6 +235,11 @@
     }
 
     function drawMatrix(time = 0) {
+      if (!matrixEnabled) {
+        matrixRafId = 0;
+        return;
+      }
+
       if (lastMatrixPaintTime && (time - lastMatrixPaintTime) < matrixFrameIntervalMs) {
         matrixRafId = requestAnimationFrame(drawMatrix);
         return;
@@ -267,7 +288,7 @@
     const scramble = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#$%";
 
     function updateAnimationVisibility() {
-      if (document.hidden) {
+      if (document.hidden || !matrixEnabled) {
         stopMatrixLoop();
         return;
       }

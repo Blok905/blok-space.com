@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Blok Space</title>
-    <link rel="stylesheet" href="styles.css?v=20260225-14">
+    <link rel="stylesheet" href="styles.css?v=20260226-01">
     <link rel="icon" href="/Images/Surveillance.png">
     <script>
         window.__blokSpaceLoadStart = (window.performance && typeof window.performance.now === 'function')
@@ -46,7 +46,7 @@
 </head>
 <body class="is-loading-screen-active">
     <div id="site-loading-overlay" role="status" aria-live="polite" aria-label="Loading Blok Space">
-        <iframe id="site-loading-frame" src="./index_loading.html" title="Blok Space loading screen" loading="eager"></iframe>
+        <iframe id="site-loading-frame" src="./index_loading.html?v=20260226-01" title="Blok Space loading screen" loading="eager"></iframe>
     </div>
     <div class="grid-background"></div>
     <header>
@@ -1168,7 +1168,12 @@
     </script>
     <script>
         (function() {
-            var MIN_LOADING_MS = 5000;
+            var constrainedDevice = window.matchMedia && (
+                window.matchMedia('(prefers-reduced-motion: reduce)').matches
+                || window.matchMedia('(pointer: coarse)').matches
+                || window.matchMedia('(max-width: 900px)').matches
+            );
+            var MIN_LOADING_MS = constrainedDevice ? 1800 : 5000;
             var overlay = document.getElementById('site-loading-overlay');
             if (!overlay) return;
 
@@ -1220,6 +1225,15 @@
         (function() {
             var heading = document.querySelector('header h1');
             if (!heading || heading.dataset.letterized === 'true') return;
+            var constrainedDevice = window.matchMedia && (
+                window.matchMedia('(prefers-reduced-motion: reduce)').matches
+                || window.matchMedia('(pointer: coarse)').matches
+                || window.matchMedia('(max-width: 900px)').matches
+            );
+            if (constrainedDevice) {
+                heading.dataset.letterized = 'true';
+                return;
+            }
 
             var rawText = heading.getAttribute('data-text') || heading.textContent || '';
             if (!rawText) return;
@@ -1285,6 +1299,16 @@
         (function() {
             var background = document.querySelector('.grid-background');
             if (!background || background.dataset.tronNodesReady === 'true') return;
+            var disableTronNodes = window.matchMedia && (
+                window.matchMedia('(prefers-reduced-motion: reduce)').matches
+                || window.matchMedia('(pointer: coarse)').matches
+                || window.matchMedia('(max-width: 900px)').matches
+            );
+            if (disableTronNodes) {
+                background.dataset.tronNodesReady = 'true';
+                background.classList.add('grid-background--static');
+                return;
+            }
             background.dataset.tronNodesReady = 'true';
 
             var layer = document.createElement('div');
