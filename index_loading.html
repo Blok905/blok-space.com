@@ -157,6 +157,19 @@
       }
     }
 
+    body.loading-lite .loading-text {
+      text-shadow:
+        0 0 6px rgba(255, 145, 0, 0.85),
+        0 0 14px rgba(255, 120, 0, 0.45);
+      animation-duration: 1.2s;
+    }
+
+    body.loading-lite .loading-text.glitching::before,
+    body.loading-lite .loading-text.glitching::after {
+      animation: none;
+      opacity: 0;
+    }
+
   </style>
 </head>
 <body>
@@ -169,23 +182,50 @@
   <script>
     const canvas = document.getElementById("matrix");
     const ctx = canvas.getContext("2d");
-    const fontSize = 18;
+    const coarsePointerQuery = window.matchMedia ? window.matchMedia("(pointer: coarse)") : null;
+    const narrowViewportQuery = window.matchMedia ? window.matchMedia("(max-width: 900px)") : null;
+    const pixelRatio = window.devicePixelRatio || 1;
+    let constrainedDevice = false;
+    let fontSize = 18;
+    let matrixFrameIntervalMs = 16;
+    let lastMatrixPaintTime = 0;
     const glyphs = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<>$#@%&";
     let columns = 0;
     let drops = [];
     let speeds = [];
     let matrixRafId = 0;
 
-    function resetMatrix() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      columns = Math.ceil(canvas.width / fontSize);
-      drops = Array.from({ length: columns }, () => Math.random() * (canvas.height / fontSize));
-      speeds = Array.from({ length: columns }, () => 0.65 + Math.random() * 1.35);
+    function isConstrainedDevice() {
+      return Boolean(
+        (coarsePointerQuery && coarsePointerQuery.matches)
+        || (narrowViewportQuery && narrowViewportQuery.matches)
+        || pixelRatio >= 2.5
+      );
     }
 
-    function drawMatrix() {
-      ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+    function resetMatrix() {
+      constrainedDevice = isConstrainedDevice();
+      document.body.classList.toggle("loading-lite", constrainedDevice);
+
+      const renderScale = constrainedDevice ? 0.62 : 1;
+      canvas.width = Math.max(1, Math.floor(window.innerWidth * renderScale));
+      canvas.height = Math.max(1, Math.floor(window.innerHeight * renderScale));
+      fontSize = constrainedDevice ? 22 : 18;
+      matrixFrameIntervalMs = constrainedDevice ? 48 : 16;
+      lastMatrixPaintTime = 0;
+      columns = Math.ceil(canvas.width / fontSize);
+      drops = Array.from({ length: columns }, () => Math.random() * (canvas.height / fontSize));
+      speeds = Array.from({ length: columns }, () => constrainedDevice ? 0.5 + Math.random() * 0.85 : 0.65 + Math.random() * 1.35);
+    }
+
+    function drawMatrix(time = 0) {
+      if (lastMatrixPaintTime && (time - lastMatrixPaintTime) < matrixFrameIntervalMs) {
+        matrixRafId = requestAnimationFrame(drawMatrix);
+        return;
+      }
+
+      lastMatrixPaintTime = time;
+      ctx.fillStyle = constrainedDevice ? "rgba(0, 0, 0, 0.12)" : "rgba(0, 0, 0, 0.05)";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = "#0f0";
       ctx.font = `${fontSize}px "Consolas", "Lucida Console", monospace`;
@@ -209,6 +249,7 @@
 
     function startMatrixLoop() {
       if (matrixRafId !== 0) return;
+      lastMatrixPaintTime = 0;
       matrixRafId = requestAnimationFrame(drawMatrix);
     }
 
@@ -255,7 +296,10 @@
       }
 
       setLoadingText(message);
-      loadingText.classList.add("done", "glitching");
+      loadingText.classList.add("done");
+      if (!constrainedDevice) {
+        loadingText.classList.add("glitching");
+      }
     }
 
     document.addEventListener("visibilitychange", updateAnimationVisibility);
