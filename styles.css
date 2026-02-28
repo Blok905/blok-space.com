@@ -548,6 +548,8 @@ main {
 section {
     margin-bottom: 40px;
     position: relative;
+    content-visibility: auto;
+    contain-intrinsic-size: 1px 900px;
 }
 
 h2 {
@@ -631,7 +633,12 @@ footer p {
     align-items: center;
     width: max-content;
     animation: galleryCarouselScroll var(--carousel-duration) linear infinite;
+    animation-play-state: paused;
     will-change: transform;
+}
+
+.gallery-grid--carousel.gallery-grid--carousel-active .gallery-carousel-track {
+    animation-play-state: running;
 }
 
 .gallery-grid--carousel .gallery-carousel-row--reverse .gallery-carousel-track {
@@ -686,6 +693,8 @@ footer p {
     overflow: visible;
     --card-item-scale: 1;
     --card-media-scale: 1;
+    content-visibility: auto;
+    contain-intrinsic-size: 165px 165px;
 }
 
 .gallery-item:hover,
@@ -874,6 +883,8 @@ footer p {
     overflow: visible;
     --card-item-scale: 1;
     --card-media-scale: 1;
+    content-visibility: auto;
+    contain-intrinsic-size: 1px 400px;
 }
 
 .gallery-flex-item:hover,
@@ -903,74 +914,6 @@ footer p {
 .gallery-flex-1 img {
     height: 60vh;
 }
-
-@media (max-width: 600px){
-    .wallet-search-window {
-        width: calc(100% - 20px);
-        padding: 14px;
-    }
-    .wallet-search-title {
-        font-size: 1.1em;
-    }
-    .wallet-search-controls {
-        width: 100%;
-        max-width: 360px;
-        margin: 0 auto;
-    }
-    .wallet-search-input {
-        width: 100%;
-    }
-    .collection-stats-window {
-        width: calc(100% - 20px);
-        padding: 14px;
-    }
-    .stats-title {
-        font-size: 1.1em;
-    }
-    .collection-stats-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-    .gallery-flex{
-        display: grid;
-        grid-template-columns: 180px 180px;
-        grid-template-rows: 180px 180px 180px;
-        justify-content: center;
-    }
-    .gallery-flex img {
-        height: 180px;
-    }
-    .item-3{
-        grid-column-start: 1;
-        grid-column-end: 3;
-    }
-    .item-4{
-        grid-column-start: 1;
-        grid-column-end: 3;
-    }
-    .deserted{
-        width: 370px;
-    }
-    .gallery-search-row {
-        gap: 8px;
-        width: calc(100% - 20px);
-        grid-template-columns: 46px minmax(0, 1fr) 46px;
-    }
-    .gallery-search-row .gallery-search {
-        max-width: none;
-    }
-    .trait-filter-window {
-        width: calc(100% - 20px);
-        padding: 10px;
-    }
-    .trait-filter-control {
-        flex: 1 1 140px;
-        min-width: 140px;
-    }
-    .trait-filter-select {
-        min-width: 0;
-    }
-}
-
 
 @keyframes glow {
     from {
@@ -1886,96 +1829,6 @@ iframe {
       align-items: center;
       height: 100vh;
     }
-
-@media (max-width: 600px) {
-    .trait-filter-window {
-        width: calc(100% - 20px);
-        padding: 10px;
-    }
-
-    .trait-filter-control {
-        flex: 1 1 140px;
-        min-width: 140px;
-    }
-
-    .trait-filter-select {
-        min-width: 0;
-    }
-}
-
-@media (max-width: 900px), (pointer: coarse) {
-    .grid-background {
-        --tron-cell: 22px;
-    }
-
-    .grid-node-layer {
-        display: none;
-    }
-
-    .grid-tron-node::before {
-        opacity: 0.7;
-        box-shadow:
-            0 0 6px rgba(136, 240, 255, 0.58),
-            0 0 14px rgba(74, 214, 255, 0.44);
-    }
-
-    .grid-tron-node::after {
-        box-shadow: 0 0 6px hsl(var(--node-hue, 196) 100% 78% / 0.72);
-    }
-
-    header h1 .h1-letter {
-        animation: none;
-        transform: none;
-        opacity: 1;
-        filter: none;
-        will-change: auto;
-    }
-
-    header h1::before,
-    header h1::after,
-    h2::before,
-    h2::after {
-        animation: none;
-        opacity: 0;
-        clip-path: inset(0 0 0 0);
-        filter: none;
-        mix-blend-mode: normal;
-    }
-
-    #curves .outer-eye,
-    #curves .mid-eye,
-    #curves .inner-eye {
-        box-shadow:
-            0 0 10px rgba(95, 221, 255, 0.36),
-            inset 0 0 12px rgba(4, 20, 38, 0.65);
-    }
-
-    #curves .mid-eye::before {
-        content: none;
-    }
-
-    #curves .inner-eye {
-        animation: eyeDriftLite 6.4s ease-in-out infinite;
-        transform: translate3d(0, 0, 0);
-        will-change: transform;
-    }
-
-    #curves .inner-eye::before {
-        content: none;
-    }
-
-    #curves .pupil {
-        animation: eyeDriftLite 4.8s ease-in-out infinite;
-        transform: translate3d(0, 0, 0);
-        background: radial-gradient(circle at 36% 30%, #24384a 0%, #071019 42%, #010204 78%);
-        box-shadow:
-            0 0 0 1px rgba(5, 14, 26, 0.86),
-            inset 0 0 10px rgba(179, 238, 255, 0.11),
-            0 0 9px rgba(86, 224, 255, 0.34);
-        -webkit-mask-image: -webkit-radial-gradient(white, black);
-        mask-image: radial-gradient(circle, #fff 97%, rgba(255, 255, 255, 0) 100%);
-    }
-}
 
 @media (prefers-reduced-motion: reduce) {
     .grid-background {

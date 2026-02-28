@@ -2,52 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Blok Space</title>
     <link rel="stylesheet" href="styles.css?v=20260226-01">
     <link rel="icon" href="/Images/Surveillance.png">
-    <script>
-        window.__blokSpaceLoadStart = (window.performance && typeof window.performance.now === 'function')
-            ? window.performance.now()
-            : Date.now();
-        document.documentElement.classList.add('is-loading-screen-active');
-    </script>
-    <style>
-        html.is-loading-screen-active,
-        body.is-loading-screen-active {
-            overflow: hidden !important;
-        }
-
-        #site-loading-overlay {
-            position: fixed;
-            inset: 0;
-            z-index: 2147483647;
-            background: #000;
-            opacity: 1;
-            visibility: visible;
-            pointer-events: auto;
-            transition: opacity 420ms ease, visibility 0s linear 420ms;
-        }
-
-        #site-loading-overlay.site-loading-overlay--hide {
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
-        }
-
-        #site-loading-frame {
-            width: 100%;
-            height: 100%;
-            border: 0;
-            display: block;
-            background: #000;
-        }
-    </style>
 </head>
-<body class="is-loading-screen-active">
-    <div id="site-loading-overlay" role="status" aria-live="polite" aria-label="Loading Blok Space">
-        <iframe id="site-loading-frame" src="./index_loading.html?v=20260226-01" title="Blok Space loading screen" loading="eager"></iframe>
-    </div>
+<body>
     <div class="grid-background"></div>
     <header>
         <div id="curves">
@@ -261,9 +220,22 @@
             <div class="gallery-grid" data-collection-symbol="blok-boyz">
                 <!-- Generate 1000 images using a loop -->
                 <script>
-                    for (let i = 1; i <= 1000; i++) {
-                        document.write('<img class="blok-boyz" loading="lazy" decoding="async" fetchpriority="low" src="./Blok Boyz/' + i + '.png" alt="Blok Boyz #' + i + '">');
-                    }
+                    (function(scriptNode) {
+                        const parent = scriptNode && scriptNode.parentElement;
+                        if (!parent) return;
+                        const fragment = document.createDocumentFragment();
+                        for (let i = 1; i <= 1000; i++) {
+                            const img = document.createElement('img');
+                            img.className = 'blok-boyz';
+                            img.loading = 'lazy';
+                            img.decoding = 'async';
+                            img.setAttribute('fetchpriority', 'low');
+                            img.src = './Blok Boyz/' + i + '.png';
+                            img.alt = 'Blok Boyz #' + i;
+                            fragment.appendChild(img);
+                        }
+                        parent.appendChild(fragment);
+                    })(document.currentScript);
                 </script>
             </div>
         </div>
@@ -310,9 +282,22 @@
         <div class="gallery-grid" data-collection-symbol="blok-space">
             <!-- Generate 1000 images using a loop -->
             <script>
-                for (let i = 1; i <= 1000; i++) {
-                    document.write('<img class="blok-boyz" loading="lazy" decoding="async" fetchpriority="low" src="./Blok Space/' + i + '.png" alt="Blok Space #' + i + '">');
-                }
+                (function(scriptNode) {
+                    const parent = scriptNode && scriptNode.parentElement;
+                    if (!parent) return;
+                    const fragment = document.createDocumentFragment();
+                    for (let i = 1; i <= 1000; i++) {
+                        const img = document.createElement('img');
+                        img.className = 'blok-boyz';
+                        img.loading = 'lazy';
+                        img.decoding = 'async';
+                        img.setAttribute('fetchpriority', 'low');
+                        img.src = './Blok Space/' + i + '.png';
+                        img.alt = 'Blok Space #' + i;
+                        fragment.appendChild(img);
+                    }
+                    parent.appendChild(fragment);
+                })(document.currentScript);
             </script>
         </div>
         </div>
@@ -368,12 +353,6 @@
       display: block;
     }
 
-    @media (max-width: 900px) {
-      #blokchain-main-frame {
-        width: 96vw;
-        height: min(72vh, 88vw);
-      }
-    }
   </style>
 </head>
   <iframe id="blokchain-main-frame" src="./Blokchain/index_blokchain.html" title="Blockchain Viewport" loading="lazy" allowfullscreen></iframe>
@@ -470,6 +449,78 @@
                 ['art-drops', './art-drops-metadata.json']
             ]);
             let sharedCarouselPixelsPerSecond = null;
+            const hasIdleCallback = typeof window.requestIdleCallback === 'function';
+            let carouselVisibilityObserver = null;
+
+            function runWhenIdle(task, timeoutMs) {
+                if (hasIdleCallback) {
+                    window.requestIdleCallback(task, { timeout: timeoutMs || 900 });
+                    return;
+                }
+                window.setTimeout(task, 0);
+            }
+
+            function runInBatches(items, batchSize, worker, onDone) {
+                const list = Array.isArray(items) ? items : Array.from(items || []);
+                const size = Math.max(1, Number(batchSize) || 1);
+                let index = 0;
+
+                function flushBatch() {
+                    const end = Math.min(index + size, list.length);
+                    for (; index < end; index += 1) {
+                        worker(list[index], index);
+                    }
+
+                    if (index < list.length) {
+                        window.requestAnimationFrame(flushBatch);
+                        return;
+                    }
+
+                    if (typeof onDone === 'function') onDone();
+                }
+
+                flushBatch();
+            }
+
+            function ensureImagePerformanceHints(img) {
+                if (!img) return;
+                if (!img.hasAttribute('loading')) img.loading = 'lazy';
+                if (!img.hasAttribute('decoding')) img.decoding = 'async';
+                if (!img.hasAttribute('fetchpriority')) img.setAttribute('fetchpriority', 'low');
+            }
+
+            function getCarouselVisibilityObserver() {
+                if (carouselVisibilityObserver) return carouselVisibilityObserver;
+                if (typeof window.IntersectionObserver !== 'function') return null;
+
+                carouselVisibilityObserver = new IntersectionObserver(function(entries) {
+                    entries.forEach(function(entry) {
+                        const gallery = entry.target;
+                        if (!gallery || !gallery.classList) return;
+                        const shouldAnimate = entry.isIntersecting && entry.intersectionRatio > 0;
+                        gallery.classList.toggle('gallery-grid--carousel-active', shouldAnimate);
+                    });
+                }, {
+                    root: null,
+                    rootMargin: '300px 0px',
+                    threshold: 0.01
+                });
+
+                return carouselVisibilityObserver;
+            }
+
+            function bindCarouselVisibility(gallery) {
+                if (!gallery || gallery.dataset.carouselVisibilityBound === 'true') return;
+
+                const observer = getCarouselVisibilityObserver();
+                if (observer) {
+                    observer.observe(gallery);
+                } else {
+                    gallery.classList.add('gallery-grid--carousel-active');
+                }
+
+                gallery.dataset.carouselVisibilityBound = 'true';
+            }
 
             function setupBlokchainResponsiveEmbed() {
                 const frame = document.getElementById('blokchain-main-frame');
@@ -868,8 +919,17 @@
                 }, 'image/jpeg', 0.95);
             }
 
-            const magicEdenLookupBySymbolPromise = loadMagicEdenLookupBySymbol();
             const pendingMagicEdenBindings = [];
+
+            function bindMagicEdenLinksInBatches(lookupBySymbol, galleries) {
+                runInBatches(pendingMagicEdenBindings, 72, function(binding) {
+                    ensureMagicEdenItemLink(binding.wrapper, binding.image, lookupBySymbol);
+                }, function() {
+                    galleries.forEach(function(gallery) {
+                        gallery.dispatchEvent(new Event('carousel:rebuild'));
+                    });
+                });
+            }
 
             function bindGalleryDownloadDelegation(gallery) {
                 if (gallery.dataset.downloadDelegated === 'true') return;
@@ -942,6 +1002,7 @@
                         rowItems.forEach(function(item) {
                             const clone = item.cloneNode(true);
                             clone.dataset.carouselClone = 'true';
+                            Array.from(clone.querySelectorAll('img')).forEach(ensureImagePerformanceHints);
                             cloneSegment.appendChild(clone);
                         });
 
@@ -961,6 +1022,7 @@
                             : palindromeReferenceDurationSeconds;
                         track.style.setProperty('--carousel-duration', durationSeconds.toFixed(2) + 's');
                     });
+                    bindCarouselVisibility(gallery);
                 } finally {
                     gallery.dataset.carouselMutating = 'false';
                 }
@@ -1013,23 +1075,94 @@
 
             setupBlokchainResponsiveEmbed();
 
-            const galleries = document.querySelectorAll('.gallery-grid');
-            galleries.forEach(function(gallery) {
-                try {
-                    const images = Array.from(gallery.querySelectorAll('img'));
+            const galleries = Array.from(document.querySelectorAll('.gallery-grid'));
+            runInBatches(
+                document.querySelectorAll('.gallery-grid img, .gallery-flex img'),
+                180,
+                ensureImagePerformanceHints
+            );
 
-                    images.forEach(function(img) {
-                        const existingWrapper = img.parentElement && img.parentElement.classList.contains('gallery-item')
-                            ? img.parentElement
-                            : null;
-                        const wrapper = existingWrapper || (function() {
-                            const createdWrapper = document.createElement('div');
-                            createdWrapper.className = 'gallery-item';
-                            createdWrapper.dataset.carouselClone = 'false';
-                            img.parentNode.insertBefore(createdWrapper, img);
-                            createdWrapper.appendChild(img);
-                            return createdWrapper;
-                        })();
+            function enhanceGallery(gallery) {
+                return new Promise(function(resolve) {
+                    try {
+                        const images = Array.from(gallery.querySelectorAll('img'));
+
+                        runInBatches(images, 72, function(img) {
+                            ensureImagePerformanceHints(img);
+
+                            const existingWrapper = img.parentElement && img.parentElement.classList.contains('gallery-item')
+                                ? img.parentElement
+                                : null;
+                            const wrapper = existingWrapper || (function() {
+                                const createdWrapper = document.createElement('div');
+                                createdWrapper.className = 'gallery-item';
+                                createdWrapper.dataset.carouselClone = 'false';
+                                img.parentNode.insertBefore(createdWrapper, img);
+                                createdWrapper.appendChild(img);
+                                return createdWrapper;
+                            })();
+                            const visualContainer = ensureGalleryItemVisualContainer(wrapper);
+
+                            const hasTitleFooter = findDirectChildByClass(wrapper, 'image-title');
+                            if (!hasTitleFooter) {
+                                const titleFooter = document.createElement('div');
+                                titleFooter.className = 'image-title';
+                                titleFooter.textContent = getImageTitle(img);
+                                visualContainer.appendChild(titleFooter);
+                            }
+
+                            const hasDownloadButton = findDirectChildByClass(wrapper, 'download-button');
+                            const downloadButton = hasDownloadButton || (function() {
+                                const button = document.createElement('button');
+                                button.type = 'button';
+                                button.className = 'download-button';
+                                button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3v10.17l3.59-3.58L17 11l-5 5-5-5 1.41-1.41L11 13.17V3h1zm-7 14h14v2H5v-2z"></path></svg>';
+                                visualContainer.appendChild(button);
+                                return button;
+                            })();
+
+                            if (downloadButton.dataset.downloadBound !== 'true') {
+                                downloadButton.type = 'button';
+                                downloadButton.className = 'download-button';
+                                downloadButton.setAttribute(
+                                    'aria-label',
+                                    getImageSourceExtension(img) === 'gif' ? 'Download original GIF' : 'Download upscaled JPEG'
+                                );
+                                downloadButton.addEventListener('click', function(event) {
+                                    event.stopPropagation();
+                                    releaseControlFocus(downloadButton);
+                                    downloadUpscaledJpeg(img);
+                                });
+                                downloadButton.dataset.downloadBound = 'true';
+                            }
+
+                            pendingMagicEdenBindings.push({
+                                wrapper: wrapper,
+                                image: img
+                            });
+                        }, function() {
+                            bindGalleryDownloadDelegation(gallery);
+                            bindCarouselRebuild(gallery);
+                            buildThreeRowCarousel(gallery);
+                            resolve();
+                        });
+                    } catch (error) {
+                        console.error('Gallery enhancement failed:', error);
+                        resolve();
+                    }
+                });
+            }
+
+            function enhanceArtDrops() {
+                return new Promise(function(resolve) {
+                    const artDropImages = Array.from(document.querySelectorAll('.gallery-flex img'));
+                    runInBatches(artDropImages, 72, function(img) {
+                        ensureImagePerformanceHints(img);
+
+                        const wrapper = img.parentElement;
+                        if (!wrapper) return;
+
+                        wrapper.classList.add('gallery-flex-item');
                         const visualContainer = ensureGalleryItemVisualContainer(wrapper);
 
                         const hasTitleFooter = findDirectChildByClass(wrapper, 'image-title');
@@ -1046,6 +1179,10 @@
                             button.type = 'button';
                             button.className = 'download-button';
                             button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3v10.17l3.59-3.58L17 11l-5 5-5-5 1.41-1.41L11 13.17V3h1zm-7 14h14v2H5v-2z"></path></svg>';
+                            button.setAttribute(
+                                'aria-label',
+                                getImageSourceExtension(img) === 'gif' ? 'Download original GIF' : 'Download upscaled JPEG'
+                            );
                             visualContainer.appendChild(button);
                             return button;
                         })();
@@ -1069,65 +1206,12 @@
                             wrapper: wrapper,
                             image: img
                         });
-                    });
-
-                    bindGalleryDownloadDelegation(gallery);
-                    bindCarouselRebuild(gallery);
-                    buildThreeRowCarousel(gallery);
-                } catch (error) {
-                    console.error('Gallery enhancement failed:', error);
-                }
-            });
-
-            const artDropImages = Array.from(document.querySelectorAll('.gallery-flex img'));
-            artDropImages.forEach(function(img) {
-                const wrapper = img.parentElement;
-                if (!wrapper) return;
-
-                wrapper.classList.add('gallery-flex-item');
-                const visualContainer = ensureGalleryItemVisualContainer(wrapper);
-
-                const hasTitleFooter = findDirectChildByClass(wrapper, 'image-title');
-                if (!hasTitleFooter) {
-                    const titleFooter = document.createElement('div');
-                    titleFooter.className = 'image-title';
-                    titleFooter.textContent = getImageTitle(img);
-                    visualContainer.appendChild(titleFooter);
-                }
-
-                const hasDownloadButton = findDirectChildByClass(wrapper, 'download-button');
-                const downloadButton = hasDownloadButton || (function() {
-                    const button = document.createElement('button');
-                    button.type = 'button';
-                    button.className = 'download-button';
-                    button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3v10.17l3.59-3.58L17 11l-5 5-5-5 1.41-1.41L11 13.17V3h1zm-7 14h14v2H5v-2z"></path></svg>';
-                    button.setAttribute(
-                        'aria-label',
-                        getImageSourceExtension(img) === 'gif' ? 'Download original GIF' : 'Download upscaled JPEG'
-                    );
-                    visualContainer.appendChild(button);
-                    return button;
-                })();
-
-                if (downloadButton.dataset.downloadBound !== 'true') {
-                    downloadButton.type = 'button';
-                    downloadButton.className = 'download-button';
-                    downloadButton.setAttribute(
-                        'aria-label',
-                        getImageSourceExtension(img) === 'gif' ? 'Download original GIF' : 'Download upscaled JPEG'
-                    );
-                    downloadButton.addEventListener('click', function(event) {
-                        event.stopPropagation();
-                        releaseControlFocus(downloadButton);
-                        downloadUpscaledJpeg(img);
-                    });
-                    downloadButton.dataset.downloadBound = 'true';
-                }
-
-                pendingMagicEdenBindings.push({
-                    wrapper: wrapper,
-                    image: img
+                    }, resolve);
                 });
+            }
+
+            const galleryEnhancementTasks = galleries.map(function(gallery) {
+                return enhanceGallery(gallery);
             });
 
             const artDropsGallery = document.querySelector('.gallery-flex');
@@ -1153,83 +1237,22 @@
                 artDropsGallery.dataset.downloadDelegated = 'true';
             }
 
-            magicEdenLookupBySymbolPromise.then(function(magicEdenLookupBySymbol) {
-                pendingMagicEdenBindings.forEach(function(binding) {
-                    ensureMagicEdenItemLink(binding.wrapper, binding.image, magicEdenLookupBySymbol);
-                });
-
-                galleries.forEach(function(gallery) {
-                    gallery.dispatchEvent(new Event('carousel:rebuild'));
-                });
-            }).catch(function(error) {
-                console.warn('Unable to attach Magic Eden item links:', error);
+            Promise.all(galleryEnhancementTasks.concat([enhanceArtDrops()])).then(function() {
+                runWhenIdle(function() {
+                    loadMagicEdenLookupBySymbol().then(function(magicEdenLookupBySymbol) {
+                        bindMagicEdenLinksInBatches(magicEdenLookupBySymbol, galleries);
+                    }).catch(function(error) {
+                        console.warn('Unable to attach Magic Eden item links:', error);
+                    });
+                }, 1200);
             });
         });
     </script>
     <script>
         (function() {
-            var constrainedDevice = window.matchMedia && (
-                window.matchMedia('(prefers-reduced-motion: reduce)').matches
-                || window.matchMedia('(pointer: coarse)').matches
-                || window.matchMedia('(max-width: 900px)').matches
-            );
-            var MIN_LOADING_MS = constrainedDevice ? 1800 : 5000;
-            var overlay = document.getElementById('site-loading-overlay');
-            if (!overlay) return;
-
-            var body = document.body;
-            var root = document.documentElement;
-            var loadStart = (typeof window.__blokSpaceLoadStart === 'number')
-                ? window.__blokSpaceLoadStart
-                : ((window.performance && typeof window.performance.now === 'function') ? window.performance.now() : Date.now());
-
-            var minDurationComplete = false;
-            var pageFullyLoaded = document.readyState === 'complete';
-            var isDismissed = false;
-
-            function finalizeDismiss() {
-                if (isDismissed || !minDurationComplete || !pageFullyLoaded) return;
-                isDismissed = true;
-                overlay.classList.add('site-loading-overlay--hide');
-                root.classList.remove('is-loading-screen-active');
-                if (body) body.classList.remove('is-loading-screen-active');
-                window.setTimeout(function() {
-                    overlay.setAttribute('aria-hidden', 'true');
-                    overlay.remove();
-                }, 450);
-            }
-
-            var elapsed = (window.performance && typeof window.performance.now === 'function')
-                ? Math.max(0, window.performance.now() - loadStart)
-                : 0;
-            var remaining = Math.max(0, MIN_LOADING_MS - elapsed);
-
-            window.setTimeout(function() {
-                minDurationComplete = true;
-                finalizeDismiss();
-            }, remaining);
-
-            function markPageLoaded() {
-                pageFullyLoaded = true;
-                finalizeDismiss();
-            }
-
-            if (pageFullyLoaded) {
-                markPageLoaded();
-            } else {
-                window.addEventListener('load', markPageLoaded, { once: true });
-            }
-        })();
-    </script>
-    <script>
-        (function() {
             var heading = document.querySelector('header h1');
             if (!heading || heading.dataset.letterized === 'true') return;
-            var constrainedDevice = window.matchMedia && (
-                window.matchMedia('(prefers-reduced-motion: reduce)').matches
-                || window.matchMedia('(pointer: coarse)').matches
-                || window.matchMedia('(max-width: 900px)').matches
-            );
+            var constrainedDevice = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
             if (constrainedDevice) {
                 heading.dataset.letterized = 'true';
                 return;
@@ -1299,11 +1322,7 @@
         (function() {
             var background = document.querySelector('.grid-background');
             if (!background || background.dataset.tronNodesReady === 'true') return;
-            var disableTronNodes = window.matchMedia && (
-                window.matchMedia('(prefers-reduced-motion: reduce)').matches
-                || window.matchMedia('(pointer: coarse)').matches
-                || window.matchMedia('(max-width: 900px)').matches
-            );
+            var disableTronNodes = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
             if (disableTronNodes) {
                 background.dataset.tronNodesReady = 'true';
                 background.classList.add('grid-background--static');
@@ -1328,8 +1347,6 @@
             var rafId = 0;
             var resizeTimer = 0;
             var motionQuery = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
-            var coarsePointerQuery = window.matchMedia ? window.matchMedia('(pointer: coarse)') : null;
-            var narrowViewportQuery = window.matchMedia ? window.matchMedia('(max-width: 900px)') : null;
             var spawnEdgeBag = [];
             var constrainedFrameMs = 0;
             var lastStepTime = 0;
@@ -1394,10 +1411,7 @@
             }
 
             function isPerformanceConstrained() {
-                return Boolean(
-                    (coarsePointerQuery && coarsePointerQuery.matches)
-                    || (narrowViewportQuery && narrowViewportQuery.matches)
-                );
+                return false;
             }
 
             function readGridSize() {
@@ -1630,22 +1644,6 @@
                     motionQuery.addEventListener('change', applyMotionPreference);
                 } else if (typeof motionQuery.addListener === 'function') {
                     motionQuery.addListener(applyMotionPreference);
-                }
-            }
-
-            if (coarsePointerQuery) {
-                if (typeof coarsePointerQuery.addEventListener === 'function') {
-                    coarsePointerQuery.addEventListener('change', applyMotionPreference);
-                } else if (typeof coarsePointerQuery.addListener === 'function') {
-                    coarsePointerQuery.addListener(applyMotionPreference);
-                }
-            }
-
-            if (narrowViewportQuery) {
-                if (typeof narrowViewportQuery.addEventListener === 'function') {
-                    narrowViewportQuery.addEventListener('change', applyMotionPreference);
-                } else if (typeof narrowViewportQuery.addListener === 'function') {
-                    narrowViewportQuery.addListener(applyMotionPreference);
                 }
             }
 
