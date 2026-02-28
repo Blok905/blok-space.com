@@ -369,8 +369,8 @@ p {
 
 .wallet-results-grid img {
     display: block;
-    width: 165px;
-    height: 165px;
+    width: 206px;
+    height: 206px;
     box-sizing: border-box;
     object-fit: cover;
     border: 6px solid #7A3F00;
@@ -380,8 +380,8 @@ p {
 }
 
 .wallet-blokchain-frame-crop {
-    width: 165px;
-    height: 165px;
+    width: 206px;
+    height: 206px;
     box-sizing: border-box;
     border: 6px solid #7A3F00;
     border-radius: 6px;
@@ -393,7 +393,7 @@ p {
     width: 520px;
     height: 520px;
     border: 0;
-    transform: scale(0.3173);
+    transform: scale(0.3962);
     transform-origin: top left;
     pointer-events: none;
     display: block;
@@ -588,7 +588,7 @@ footer p {
 
 .gallery-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(165px, 165px));
+    grid-template-columns: repeat(auto-fill, minmax(206px, 206px));
     gap: 15px;
     justify-content: center;
     margin-bottom: 15px;
@@ -649,7 +649,7 @@ footer p {
 }
 
 .gallery-search-results {
-    grid-template-columns: repeat(auto-fit, minmax(165px, 165px));
+    grid-template-columns: repeat(auto-fit, minmax(206px, 206px));
     justify-content: center;
     width: 100%;
     margin-left: auto;
@@ -657,8 +657,8 @@ footer p {
 }
 
 .gallery-grid img {
-    width: 165px;
-    height: 165px;
+    width: 206px;
+    height: 206px;
     box-sizing: border-box;
     object-fit: cover;
     border: 6px solid #7A3F00;
@@ -669,14 +669,14 @@ footer p {
 
 .gallery-item {
     position: relative;
-    width: 165px;
-    height: 165px;
+    width: 206px;
+    height: 206px;
     overflow: visible;
     transform: translateZ(0) scale(1);
     transform-origin: center;
     transition: transform 0.3s ease;
     content-visibility: auto;
-    contain-intrinsic-size: 165px 165px;
+    contain-intrinsic-size: 206px 206px;
 }
 
 .gallery-item:hover,
@@ -836,7 +836,7 @@ footer p {
 }
 
 .gallery-flex img {
-    height: 400px;
+    height: 500px;
     box-sizing: border-box;
     object-fit: cover;
     border: 6px solid #7A3F00;
@@ -854,7 +854,7 @@ footer p {
     transform-origin: center;
     transition: transform 0.3s ease;
     content-visibility: auto;
-    contain-intrinsic-size: 1px 400px;
+    contain-intrinsic-size: 1px 500px;
 }
 
 .gallery-flex-item:hover,
@@ -881,7 +881,7 @@ footer p {
 }
 
 .gallery-flex-1 img {
-    height: 60vh;
+    height: 75vh;
 }
 
 @keyframes glow {
@@ -1430,8 +1430,9 @@ footer p {
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    height: clamp(8em, 34vw, 12em);
     width: min(20em, 90vw);
+    height: auto;
+    aspect-ratio: 20 / 12;
     margin-top: 2em;
     overflow: hidden;
     border: solid 2px #4d6279;
@@ -1786,28 +1787,28 @@ iframe {
     }
 
     .gallery-grid {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 150px));
+        grid-template-columns: repeat(auto-fill, minmax(188px, 188px));
         gap: 12px;
     }
 
     .gallery-search-results {
-        grid-template-columns: repeat(auto-fit, minmax(150px, 150px));
+        grid-template-columns: repeat(auto-fit, minmax(188px, 188px));
     }
 
     .gallery-item,
     .gallery-grid img,
     .wallet-results-grid img,
     .wallet-blokchain-frame-crop {
-        width: 150px;
-        height: 150px;
+        width: 188px;
+        height: 188px;
     }
 
     .wallet-blokchain-frame {
-        transform: scale(0.2885);
+        transform: scale(0.3615);
     }
 
     .gallery-flex img {
-        height: clamp(250px, 44vw, 340px);
+        height: clamp(313px, 55vw, 425px);
     }
 }
 
@@ -1843,24 +1844,24 @@ iframe {
     }
 
     .gallery-grid {
-        grid-template-columns: repeat(auto-fill, minmax(132px, 132px));
+        grid-template-columns: repeat(auto-fill, minmax(165px, 165px));
         gap: 10px;
     }
 
     .gallery-search-results {
-        grid-template-columns: repeat(auto-fit, minmax(132px, 132px));
+        grid-template-columns: repeat(auto-fit, minmax(165px, 165px));
     }
 
     .gallery-item,
     .gallery-grid img,
     .wallet-results-grid img,
     .wallet-blokchain-frame-crop {
-        width: 132px;
-        height: 132px;
+        width: 165px;
+        height: 165px;
     }
 
     .wallet-blokchain-frame {
-        transform: scale(0.2539);
+        transform: scale(0.3173);
     }
 
     .trait-filter-control,
@@ -1910,24 +1911,24 @@ iframe {
     }
 
     .gallery-grid {
-        grid-template-columns: repeat(auto-fill, minmax(118px, 118px));
+        grid-template-columns: repeat(auto-fill, minmax(148px, 148px));
         gap: 8px;
     }
 
     .gallery-search-results {
-        grid-template-columns: repeat(auto-fit, minmax(118px, 118px));
+        grid-template-columns: repeat(auto-fit, minmax(148px, 148px));
     }
 
     .gallery-item,
     .gallery-grid img,
     .wallet-results-grid img,
     .wallet-blokchain-frame-crop {
-        width: 118px;
-        height: 118px;
+        width: 148px;
+        height: 148px;
     }
 
     .wallet-blokchain-frame {
-        transform: scale(0.2269);
+        transform: scale(0.2846);
     }
 
     .trait-filter-controls {
@@ -1945,11 +1946,11 @@ iframe {
     }
 
     .gallery-flex img {
-        height: clamp(180px, 60vw, 280px);
+        height: clamp(225px, 75vw, 350px);
     }
 
     .gallery-flex-1 img {
-        height: clamp(210px, 56vh, 420px);
+        height: clamp(263px, 70vh, 525px);
     }
 
     iframe {
