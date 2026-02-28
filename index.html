@@ -440,6 +440,9 @@
             const palindromeReferenceDurationSeconds = 31.2;
             const fallbackCarouselPixelsPerSecond = 180;
             const carouselSpeedScale = 0.8;
+            const carouselSourcePreloadPerRow = 96;
+            const carouselClonePreloadPerRow = 24;
+            const carouselHighPriorityPerRow = 18;
             const magicEdenItemBaseUrl = 'https://magiceden.io/ordinals/item-details/';
             const magicEdenIconPath = './Images/ME.png';
             const collectionMetadataPaths = new Map([
@@ -487,6 +490,13 @@
                 if (!img.hasAttribute('loading')) img.loading = 'lazy';
                 if (!img.hasAttribute('decoding')) img.decoding = 'async';
                 if (!img.hasAttribute('fetchpriority')) img.setAttribute('fetchpriority', 'low');
+            }
+
+            function prioritizeCarouselImage(img, highPriority) {
+                if (!img) return;
+                img.loading = 'eager';
+                img.decoding = 'async';
+                img.setAttribute('fetchpriority', highPriority ? 'high' : 'auto');
             }
 
             function getCarouselVisibilityObserver() {
@@ -995,14 +1005,25 @@
                         const cloneSegment = document.createElement('div');
                         cloneSegment.className = 'gallery-carousel-segment';
 
-                        rowItems.forEach(function(item) {
+                        rowItems.forEach(function(item, itemIndex) {
                             sourceSegment.appendChild(item);
+
+                            if (itemIndex < carouselSourcePreloadPerRow) {
+                                const sourceImg = item.querySelector('img');
+                                prioritizeCarouselImage(sourceImg, itemIndex < carouselHighPriorityPerRow);
+                            }
                         });
 
-                        rowItems.forEach(function(item) {
+                        rowItems.forEach(function(item, itemIndex) {
                             const clone = item.cloneNode(true);
                             clone.dataset.carouselClone = 'true';
                             Array.from(clone.querySelectorAll('img')).forEach(ensureImagePerformanceHints);
+
+                            if (itemIndex < carouselClonePreloadPerRow) {
+                                const cloneImg = clone.querySelector('img');
+                                prioritizeCarouselImage(cloneImg, false);
+                            }
+
                             cloneSegment.appendChild(clone);
                         });
 
