@@ -1185,7 +1185,7 @@
         const firstCardStyle = window.getComputedStyle(statCards[0]);
         const horizontalPadding = (parseFloat(firstCardStyle.paddingLeft) || 0) + (parseFloat(firstCardStyle.paddingRight) || 0);
         const horizontalBorder = (parseFloat(firstCardStyle.borderLeftWidth) || 0) + (parseFloat(firstCardStyle.borderRightWidth) || 0);
-        const edgeAllowance = 24;
+        const edgeAllowance = 2;
 
         let widestTextWidth = 0;
         statCards.forEach(card => {
@@ -1202,9 +1202,7 @@
         const gridGap = parseFloat(statsGridStyle.columnGap || statsGridStyle.gap || '0') || 0;
         const availableWidth = Math.max(1, statsGrid.clientWidth);
 
-        const minCardWidth = 130;
-        const maxCardWidth = 340;
-        const resolvedCardWidth = Math.max(minCardWidth, Math.min(desiredWidth, maxCardWidth));
+        const resolvedCardWidth = Math.max(1, desiredWidth);
         const statCount = Math.max(1, statCards.length);
         const singleRowMaxCardWidth = Math.floor((availableWidth - (gridGap * (statCount - 1))) / statCount);
         const canFitSingleRow = singleRowMaxCardWidth >= resolvedCardWidth;
@@ -1231,6 +1229,21 @@
 
         traitControls.style.removeProperty('--trait-filter-card-width');
 
+        const linkedCollectionSymbol = String(traitFilterWindow?.dataset.collectionSymbol || '').trim().toLowerCase();
+        let linkedStatCardWidth = 0;
+        if (linkedCollectionSymbol) {
+            const linkedStatsWindow = document.querySelector(`.collection-stats-window[data-collection-symbol="${linkedCollectionSymbol}"]`);
+            const linkedStatsGrid = linkedStatsWindow?.querySelector('.collection-stats-grid');
+            const linkedStatCard = linkedStatsWindow?.querySelector('.collection-stat');
+            if (linkedStatsGrid) {
+                const explicitGridWidth = parseFloat(linkedStatsGrid.style.getPropertyValue('--collection-stat-card-width'));
+                if (Number.isFinite(explicitGridWidth) && explicitGridWidth > 0) linkedStatCardWidth = explicitGridWidth;
+            }
+            if (linkedStatCardWidth <= 0 && linkedStatCard) {
+                linkedStatCardWidth = Math.ceil(linkedStatCard.getBoundingClientRect().width);
+            }
+        }
+
         const firstCardStyle = window.getComputedStyle(traitCards[0]);
         const horizontalPadding = (parseFloat(firstCardStyle.paddingLeft) || 0) + (parseFloat(firstCardStyle.paddingRight) || 0);
         const horizontalBorder = (parseFloat(firstCardStyle.borderLeftWidth) || 0) + (parseFloat(firstCardStyle.borderRightWidth) || 0);
@@ -1253,19 +1266,12 @@
 
         const minCardWidth = 130;
         const maxCardWidth = 340;
-        const resolvedCardWidth = Math.max(minCardWidth, Math.min(desiredWidth, maxCardWidth));
+        const resolvedCardWidth = linkedStatCardWidth > 0
+            ? linkedStatCardWidth
+            : Math.max(minCardWidth, Math.min(desiredWidth, maxCardWidth));
         const traitCount = Math.max(1, traitCards.length);
         const singleRowMaxCardWidth = Math.floor((availableWidth - (controlsGap * (traitCount - 1))) / traitCount);
         const canFitSingleRow = singleRowMaxCardWidth >= resolvedCardWidth;
-        const constrainedScreen = window.matchMedia && window.matchMedia('(max-width: 1024px)').matches;
-        const fittedSingleRowWidth = Math.max(1, singleRowMaxCardWidth);
-
-        if (!constrainedScreen) {
-            const desktopCardWidth = Math.min(resolvedCardWidth, fittedSingleRowWidth);
-            traitControls.style.setProperty('--trait-filter-card-width', `${desktopCardWidth}px`);
-            traitControls.style.flexWrap = 'nowrap';
-            return;
-        }
 
         traitControls.style.setProperty('--trait-filter-card-width', `${resolvedCardWidth}px`);
         traitControls.style.flexWrap = canFitSingleRow ? 'nowrap' : 'wrap';
@@ -1616,6 +1622,7 @@
         if (supportsTraitFilters) {
             traitFilterWindow = document.createElement('div');
             traitFilterWindow.className = 'trait-filter-window is-collapsed';
+            if (gridSymbol) traitFilterWindow.dataset.collectionSymbol = gridSymbol;
             traitFilterWindows.push(traitFilterWindow);
 
             traitFilterWindowCounter += 1;
