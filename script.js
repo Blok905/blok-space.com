@@ -1222,6 +1222,64 @@
         setTimeout(() => syncCollectionStatCardWidth(statsWindow), 0);
     }
 
+    function syncTraitFilterCardWidth(traitFilterWindow) {
+        const traitControls = traitFilterWindow?.querySelector('.trait-filter-controls');
+        if (!traitControls) return;
+
+        const traitCards = Array.from(traitControls.querySelectorAll('.trait-filter-control'));
+        if (traitCards.length === 0) return;
+
+        traitControls.style.removeProperty('--trait-filter-card-width');
+
+        const firstCardStyle = window.getComputedStyle(traitCards[0]);
+        const horizontalPadding = (parseFloat(firstCardStyle.paddingLeft) || 0) + (parseFloat(firstCardStyle.paddingRight) || 0);
+        const horizontalBorder = (parseFloat(firstCardStyle.borderLeftWidth) || 0) + (parseFloat(firstCardStyle.borderRightWidth) || 0);
+        const edgeAllowance = 30;
+
+        let widestTextWidth = 0;
+        traitCards.forEach(card => {
+            const labelNode = card.querySelector('.trait-filter-label');
+            const selectNode = card.querySelector('.trait-filter-select');
+            if (labelNode) widestTextWidth = Math.max(widestTextWidth, Math.ceil(labelNode.scrollWidth));
+            if (selectNode) widestTextWidth = Math.max(widestTextWidth, Math.ceil(selectNode.scrollWidth));
+        });
+
+        if (widestTextWidth <= 0) return;
+
+        const desiredWidth = Math.ceil(widestTextWidth + horizontalPadding + horizontalBorder + edgeAllowance);
+        const controlsStyle = window.getComputedStyle(traitControls);
+        const controlsGap = parseFloat(controlsStyle.columnGap || controlsStyle.gap || '0') || 0;
+        const availableWidth = Math.max(1, traitControls.clientWidth);
+
+        const minCardWidth = 130;
+        const maxCardWidth = 340;
+        const resolvedCardWidth = Math.max(minCardWidth, Math.min(desiredWidth, maxCardWidth));
+        const traitCount = Math.max(1, traitCards.length);
+        const singleRowMaxCardWidth = Math.floor((availableWidth - (controlsGap * (traitCount - 1))) / traitCount);
+        const canFitSingleRow = singleRowMaxCardWidth >= resolvedCardWidth;
+        const constrainedScreen = window.matchMedia && window.matchMedia('(max-width: 1024px)').matches;
+        const fittedSingleRowWidth = Math.max(1, singleRowMaxCardWidth);
+
+        if (!constrainedScreen) {
+            const desktopCardWidth = Math.min(resolvedCardWidth, fittedSingleRowWidth);
+            traitControls.style.setProperty('--trait-filter-card-width', `${desktopCardWidth}px`);
+            traitControls.style.flexWrap = 'nowrap';
+            return;
+        }
+
+        traitControls.style.setProperty('--trait-filter-card-width', `${resolvedCardWidth}px`);
+        traitControls.style.flexWrap = canFitSingleRow ? 'nowrap' : 'wrap';
+    }
+
+    function scheduleTraitFilterCardWidthSync(traitFilterWindow) {
+        if (!traitFilterWindow) return;
+        if (typeof window.requestAnimationFrame === 'function') {
+            window.requestAnimationFrame(() => syncTraitFilterCardWidth(traitFilterWindow));
+            return;
+        }
+        setTimeout(() => syncTraitFilterCardWidth(traitFilterWindow), 0);
+    }
+
     async function refreshCollectionStats(statsWindow, sharedSearchPayload) {
         if (collectionStatsRefreshInProgress.has(statsWindow)) return;
         collectionStatsRefreshInProgress.add(statsWindow);
@@ -1367,6 +1425,7 @@
         walletCollectionConfig.map(collection => [collection.symbol, collection.metadataPath])
     );
     const traitFilterDataPromiseBySymbol = new Map();
+    const traitFilterWindows = [];
 
     function normalizeCollectionId(value) {
         const normalized = String(value || '').trim().toLowerCase();
@@ -1511,7 +1570,7 @@
     document.querySelectorAll('.gallery-grid').forEach(grid => {
         const input = document.createElement('input');
         input.type = 'text';
-        input.placeholder = 'Search by Collection ID';
+        input.placeholder = 'Collection ID';
         input.className = 'gallery-search';
 
         const gridSymbol = String(grid.dataset.collectionSymbol || '').trim().toLowerCase();
@@ -1557,6 +1616,7 @@
         if (supportsTraitFilters) {
             traitFilterWindow = document.createElement('div');
             traitFilterWindow.className = 'trait-filter-window is-collapsed';
+            traitFilterWindows.push(traitFilterWindow);
 
             traitFilterWindowCounter += 1;
             const contentNodeId = `trait-filter-content-${gridSymbol || 'collection'}-${traitFilterWindowCounter}`;
@@ -1635,6 +1695,7 @@
             traitFilterToggleNode.setAttribute('aria-expanded', String(traitFilterIsExpanded));
             traitFilterToggleNode.textContent = traitFilterIsExpanded ? 'Hide Trait Filters' : 'Show Trait Filters';
             traitFilterContentNode.hidden = !traitFilterIsExpanded;
+            if (traitFilterIsExpanded) scheduleTraitFilterCardWidthSync(traitFilterWindow);
         }
 
         function setTraitFilterStatus(message, isError) {
@@ -1796,6 +1857,12 @@
             loadedTraitData.traitTypes.forEach(traitType => {
                 const traitControl = document.createElement('label');
                 traitControl.className = 'trait-filter-control';
+                traitControl.style.border = '0';
+                traitControl.style.background = 'transparent';
+                traitControl.style.borderRadius = '0';
+                traitControl.style.boxShadow = 'none';
+                traitControl.style.outline = '0';
+                traitControl.style.padding = '0';
 
                 const traitLabel = document.createElement('span');
                 traitLabel.className = 'trait-filter-label';
@@ -1807,7 +1874,7 @@
 
                 const anyOption = document.createElement('option');
                 anyOption.value = '';
-                anyOption.textContent = `Any ${traitType.label}`;
+                anyOption.textContent = `any (${traitType.values.length})`;
                 traitSelect.appendChild(anyOption);
 
                 traitType.values.forEach(traitValue => {
@@ -1825,6 +1892,7 @@
                 traitFilterControlsNode.appendChild(traitControl);
             });
             setTraitFilterStatus('', false);
+            scheduleTraitFilterCardWidthSync(traitFilterWindow);
         }
 
         input.addEventListener('input', applyGalleryFilters);
@@ -1861,6 +1929,16 @@
             setTraitFilterWindowExpanded(false);
         }
     });
+
+    if (traitFilterWindows.length > 0) {
+        let traitFilterResizeDebounce = null;
+        window.addEventListener('resize', () => {
+            clearTimeout(traitFilterResizeDebounce);
+            traitFilterResizeDebounce = setTimeout(() => {
+                traitFilterWindows.forEach(scheduleTraitFilterCardWidthSync);
+            }, 120);
+        });
+    }
 
     // Some collections use non-grid layouts (iframe/flex). Keep the marketplace
     // link directly above media by placing stats just above that link.

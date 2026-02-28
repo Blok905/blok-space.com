@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Blok Space</title>
-    <link rel="stylesheet" href="styles.css?v=20260228-06">
+    <link rel="stylesheet" href="styles.css?v=20260228-26">
     <link rel="icon" href="/Images/Surveillance.png">
 </head>
 <body>
@@ -24,7 +24,7 @@
     </header>
     <section class="wallet-search-window" aria-labelledby="wallet-search-title">
         <form id="wallet-search-form" class="wallet-search-form">
-            <label class="wallet-search-label" for="wallet-search-input">Bitcoin wallet address search</label>
+            <label class="wallet-search-label" for="wallet-search-input">Taproot wallet address search</label>
             <div class="wallet-search-controls">
                 <input id="wallet-search-input" class="wallet-search-input" type="text" autocomplete="off" spellcheck="false" placeholder="bc1..." required>
                 <span id="wallet-search-spinner" class="wallet-search-spinner" aria-hidden="true"></span>
@@ -432,7 +432,7 @@
     <footer>
         <p>Est. 2023</p>
     </footer>
-    <script src="script.js?v=20260228-07"></script>
+    <script src="script.js?v=20260228-15"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const upscaleFactor = 4;
@@ -1487,6 +1487,7 @@
             var width = 0;
             var height = 0;
             var playTop = 0;
+            var playBottom = 0;
             var playHeight = 0;
             var gridSize = 20;
             var gridOffsetX = 0;
@@ -1734,8 +1735,17 @@
                 height = Math.max(1, background.clientHeight);
                 constrainedFrameMs = isPerformanceConstrained(nowMs) ? 34 : 0;
                 var headerElement = document.querySelector('header');
+                var footerElement = document.querySelector('footer');
                 playTop = headerElement ? Math.max(0, Math.round(headerElement.offsetHeight)) : 0;
-                playHeight = Math.max(1, height - playTop);
+                if (footerElement) {
+                    var backgroundRect = background.getBoundingClientRect();
+                    var footerRect = footerElement.getBoundingClientRect();
+                    var footerTop = Math.round(footerRect.top - backgroundRect.top);
+                    playBottom = Math.max(playTop + 1, Math.min(height, footerTop));
+                } else {
+                    playBottom = height;
+                }
+                playHeight = Math.max(1, playBottom - playTop);
                 gridOffsetX = 0;
                 gridOffsetY = ((gridSize - (playTop % gridSize)) % gridSize);
                 spawnEdgeBag = [];
@@ -1861,8 +1871,3 @@
     </script>
 </body>
 </html>
-
-
-
-
-
