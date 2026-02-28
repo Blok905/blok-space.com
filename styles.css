@@ -25,19 +25,16 @@ body {
     width: 100%;
     height: 100%;
     pointer-events: none;
-    background: repeating-linear-gradient(
-        0deg,
-        rgba(84, 225, 255, 0.14),
-        rgba(84, 225, 255, 0.14) 1px,
-        transparent 1px,
-        transparent var(--tron-cell)
+    background-image:
+    linear-gradient(
+        to bottom,
+        rgba(84, 225, 255, 0.15) 1px,
+        transparent 1px
     ),
-    repeating-linear-gradient(
-        90deg,
-        rgba(84, 225, 255, 0.14),
-        rgba(84, 225, 255, 0.14) 1px,
-        transparent 1px,
-        transparent var(--tron-cell)
+    linear-gradient(
+        to right,
+        rgba(84, 225, 255, 0.15) 1px,
+        transparent 1px
     ),
     radial-gradient(
         circle at 50% 45%,
@@ -45,32 +42,17 @@ body {
         rgba(8, 13, 20, 0.9) 58%,
         rgba(0, 0, 0, 0.98) 100%
     );
+    background-size:
+        var(--tron-cell) var(--tron-cell),
+        var(--tron-cell) var(--tron-cell),
+        100% 100%;
+    background-repeat: repeat, repeat, no-repeat;
     z-index: -1;
     background-position: 0 0, 0 0, 0 0;
 }
 
 .grid-background::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 2;
-    background:
-        repeating-linear-gradient(
-            0deg,
-            rgba(84, 225, 255, 0.13),
-            rgba(84, 225, 255, 0.13) 1px,
-            transparent 1px,
-            transparent var(--tron-cell)
-        ),
-        repeating-linear-gradient(
-            90deg,
-            rgba(84, 225, 255, 0.13),
-            rgba(84, 225, 255, 0.13) 1px,
-            transparent 1px,
-            transparent var(--tron-cell)
-        );
-    background-position: 0 0, 0 0;
+    content: none;
 }
 
 .grid-node-layer {
@@ -164,7 +146,8 @@ header {
 header h1 {
     padding: 0;
     margin: 20px 0;
-    font-size: 3em;
+    font-size: clamp(1.75rem, 5.2vw, 3rem);
+    line-height: 1.12;
     color: #D77907;
     position: relative;
     display: inline-block;
@@ -245,6 +228,7 @@ p {
     width: min(980px, calc(100% - 32px));
     margin: auto;
     padding: 18px 20px;
+    box-sizing: border-box;
     border: none;
     background: transparent;
     box-shadow: none;
@@ -392,9 +376,7 @@ p {
     border: 6px solid #7A3F00;
     border-radius: 6px;
     pointer-events: none;
-    transform: scale(var(--card-media-scale, 1));
-    transform-origin: center;
-    transition: transform 0.3s, box-shadow 0.3s;
+    transition: box-shadow 0.3s;
 }
 
 .wallet-blokchain-frame-crop {
@@ -421,6 +403,7 @@ p {
     width: min(980px, calc(100% - 32px));
     margin: auto;
     padding: 18px 20px;
+    box-sizing: border-box;
     border: none;
     background: transparent;
     box-shadow: none;
@@ -542,7 +525,6 @@ nav ul li a:hover::after {
 
 main {
     padding: 20px;
-    animation: fadeIn 2s ease-in-out;
 }
 
 section {
@@ -553,7 +535,8 @@ section {
 }
 
 h2 {
-    font-size: 2em;
+    font-size: clamp(1.45rem, 4.2vw, 2rem);
+    line-height: 1.15;
     text-decoration: none;
     color: #D77907;
     position: relative;
@@ -681,9 +664,7 @@ footer p {
     border: 6px solid #7A3F00;
     border-radius: 6px;
     pointer-events: none;
-    transform: scale(var(--card-media-scale, 1));
-    transform-origin: center;
-    transition: transform 0.3s, box-shadow 0.3s;
+    transition: box-shadow 0.3s;
 }
 
 .gallery-item {
@@ -691,25 +672,21 @@ footer p {
     width: 165px;
     height: 165px;
     overflow: visible;
-    --card-item-scale: 1;
-    --card-media-scale: 1;
+    transform: translateZ(0) scale(1);
+    transform-origin: center;
+    transition: transform 0.3s ease;
     content-visibility: auto;
     contain-intrinsic-size: 165px 165px;
 }
 
 .gallery-item:hover,
 .gallery-item:focus-within {
-    --card-item-scale: 1.1;
-    --card-media-scale: 1.1;
+    transform: translateZ(0) scale(1.1);
     z-index: 3;
 }
 
 .gallery-item-visual {
     position: relative;
-    transform: scale(var(--card-item-scale, 1));
-    transform-origin: center;
-    transition: transform 0.3s;
-    --card-media-scale: 1;
 }
 
 .gallery-item > .gallery-item-visual {
@@ -740,9 +717,7 @@ footer p {
     cursor: pointer;
     opacity: 0;
     visibility: hidden;
-    transform: scale(var(--card-media-scale, 1));
-    transform-origin: top right;
-    transition: transform 0.3s, opacity 0.2s ease, visibility 0.2s ease;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
     z-index: 2;
 }
 
@@ -787,9 +762,7 @@ footer p {
     z-index: 1;
     opacity: 0;
     visibility: hidden;
-    transform: scale(var(--card-media-scale, 1));
-    transform-origin: bottom center;
-    transition: transform 0.3s, opacity 0.2s ease, visibility 0.2s ease;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
 }
 
 .gallery-item:hover .image-title,
@@ -824,9 +797,7 @@ footer p {
     display: block;
     opacity: 0;
     visibility: hidden;
-    transform: scale(var(--card-media-scale, 1));
-    transform-origin: top left;
-    transition: transform 0.3s, opacity 0.2s ease, visibility 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    transition: opacity 0.2s ease, visibility 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
     z-index: 2;
 }
 
@@ -872,25 +843,23 @@ footer p {
     border-radius: 6px;
     display: block;
     pointer-events: none;
-    transform: scale(var(--card-media-scale, 1));
-    transform-origin: center;
-    transition: transform 0.3s, box-shadow 0.3s;
+    transition: box-shadow 0.3s;
 }
 
 .gallery-flex-item {
     position: relative;
     display: inline-block;
     overflow: visible;
-    --card-item-scale: 1;
-    --card-media-scale: 1;
+    transform: translateZ(0) scale(1);
+    transform-origin: center;
+    transition: transform 0.3s ease;
     content-visibility: auto;
     contain-intrinsic-size: 1px 400px;
 }
 
 .gallery-flex-item:hover,
 .gallery-flex-item:focus-within {
-    --card-item-scale: 1.1;
-    --card-media-scale: 1.1;
+    transform: translateZ(0) scale(1.1);
     z-index: 3;
 }
 
@@ -1394,27 +1363,9 @@ footer p {
     }
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
-}
-
 @keyframes walletSearchSpinnerSpin {
     to {
         transform: translate(calc(-100% - 10px), -50%) rotate(360deg);
-    }
-}
-
-@keyframes moveBackground {
-    from {
-        background-position: 0 0;
-    }
-    to {
-        background-position: 100% 100%;
     }
 }
 
@@ -1433,24 +1384,6 @@ footer p {
     }
     to {
         transform: translateX(0);
-    }
-}
-
-.animated-line {
-    position: absolute;
-    width: 2px;
-    height: 100vh;
-    background: linear-gradient(to bottom, rgba(215, 121, 7, 0), rgba(215, 121, 7, 0.8));
-    z-index: 1;
-    pointer-events: none;
-}
-
-@keyframes moveLine {
-    0% {
-        transform: translateX(0) translateY(0);
-    }
-    100% {
-        transform: translateX(100vw) translateY(100vh);
     }
 }
 #gallery{
@@ -1497,8 +1430,8 @@ footer p {
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    height: 12em;
-    width: 20em;
+    height: clamp(8em, 34vw, 12em);
+    width: min(20em, 90vw);
     margin-top: 2em;
     overflow: hidden;
     border: solid 2px #4d6279;
@@ -1598,7 +1531,7 @@ footer p {
     border-radius: 50%;
     overflow: hidden;
     isolation: auto;
-    background: radial-gradient(circle at 36% 30%, #20303c 0%, #02060a 42%, #000 70%, rgba(0, 0, 0, 0) 73%);
+    background: radial-gradient(circle at 36% 30%, #20303c 0%, #02060a 42%, #000 78%);
     box-shadow:
         0 0 0 2px rgba(5, 14, 26, 0.82),
         inset 0 0 12px rgba(179, 238, 255, 0.12),
@@ -1606,7 +1539,13 @@ footer p {
     animation: twitch 3s infinite;
     -webkit-clip-path: circle(50% at 50% 50%);
     clip-path: circle(50% at 50% 50%);
-    contain: layout style;
+    -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 62%, transparent 63%);
+    mask-image: radial-gradient(circle at 50% 50%, #000 62%, transparent 63%);
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    contain: none;
     transform: none;
     -webkit-backface-visibility: visible;
     backface-visibility: visible;
@@ -1638,21 +1577,6 @@ footer p {
     clip-path: circle(50% at 50% 50%);
 }
 
-@media (hover: none) and (pointer: coarse) {
-    #curves .pupil {
-        -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 62%, transparent 63%);
-        mask-image: radial-gradient(circle at 50% 50%, #000 62%, transparent 63%);
-        -webkit-mask-size: 100% 100%;
-        mask-size: 100% 100%;
-        -webkit-mask-repeat: no-repeat;
-        mask-repeat: no-repeat;
-        box-shadow:
-            0 0 0 2px rgba(5, 14, 26, 0.82),
-            0 0 14px rgba(86, 224, 255, 0.42);
-        contain: none;
-    }
-}
-
 #curves .pupil>img{
     height: 80%;
     width: 80%;
@@ -1667,7 +1591,7 @@ input{
     border-radius: 0.5em;
     font-size: 1em;
     height: 2em;
-    width: 400px;
+    width: min(400px, 100%);
     margin-bottom: 1em;
 }
 button{
@@ -1691,18 +1615,6 @@ button{
     display: flex;
     flex-direction: column;
     align-items: center;
-}
-.fade-out {
-    opacity: 0;
-}
-
-@keyframes neonGlow {
-    0% {
-        box-shadow: 0 0 10px #D77907, 0 0 20px #D77907, 0 0 30px #D77907, 0 0 40px #D77907;
-    }
-    100% {
-        box-shadow: 0 0 20px #D77907, 0 0 30px #D77907, 0 0 40px #D77907, 0 0 50px #D77907;
-    }
 }
 .gallery-search {
     display: block;
@@ -1848,7 +1760,7 @@ button{
 
 iframe {
       width: 95%;
-      height: 90vh;
+      height: clamp(420px, 88vh, 1000px);
       border: 4px solid #f7931a;
       box-shadow: 0 0 20px #f7931a;
       margin: auto;
@@ -1856,8 +1768,196 @@ iframe {
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
     }
+
+@media (max-width: 1024px) {
+    main {
+        padding: 16px 14px;
+    }
+
+    section {
+        margin-bottom: 30px;
+    }
+
+    .wallet-search-window,
+    .collection-stats-window,
+    .trait-filter-window {
+        width: calc(100% - 24px);
+    }
+
+    .gallery-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 150px));
+        gap: 12px;
+    }
+
+    .gallery-search-results {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 150px));
+    }
+
+    .gallery-item,
+    .gallery-grid img,
+    .wallet-results-grid img,
+    .wallet-blokchain-frame-crop {
+        width: 150px;
+        height: 150px;
+    }
+
+    .wallet-blokchain-frame {
+        transform: scale(0.2885);
+    }
+
+    .gallery-flex img {
+        height: clamp(250px, 44vw, 340px);
+    }
+}
+
+@media (max-width: 768px) {
+    header {
+        padding: 14px 10px;
+    }
+
+    #curves .outer-eye {
+        margin-top: 1.2em;
+    }
+
+    #gallery {
+        margin-top: 36px;
+    }
+
+    .wallet-search-window,
+    .collection-stats-window,
+    .trait-filter-window {
+        width: calc(100% - 20px);
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .collection-stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    }
+
+    .gallery-search-row {
+        grid-template-columns: 48px minmax(0, 1fr) 48px;
+        gap: 8px;
+        max-width: 100%;
+    }
+
+    .gallery-grid {
+        grid-template-columns: repeat(auto-fill, minmax(132px, 132px));
+        gap: 10px;
+    }
+
+    .gallery-search-results {
+        grid-template-columns: repeat(auto-fit, minmax(132px, 132px));
+    }
+
+    .gallery-item,
+    .gallery-grid img,
+    .wallet-results-grid img,
+    .wallet-blokchain-frame-crop {
+        width: 132px;
+        height: 132px;
+    }
+
+    .wallet-blokchain-frame {
+        transform: scale(0.2539);
+    }
+
+    .trait-filter-control,
+    .trait-filter-select {
+        min-width: 0;
+    }
+
+    iframe {
+        width: calc(100% - 12px);
+        height: clamp(360px, 72vh, 760px);
+    }
+}
+
+@media (max-width: 560px) {
+    main {
+        padding: 12px 8px;
+    }
+
+    .wallet-search-window,
+    .collection-stats-window,
+    .trait-filter-window {
+        width: calc(100% - 14px);
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+
+    .gallery-search-row {
+        grid-template-columns: minmax(0, 1fr);
+        justify-items: center;
+        gap: 6px;
+    }
+
+    .gallery-search-slot {
+        width: 100%;
+    }
+
+    .gallery-search-slot--right {
+        display: none;
+    }
+
+    .gallery-search-row .gallery-search {
+        width: min(100%, 340px);
+    }
+
+    .collection-stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(105px, 1fr));
+    }
+
+    .gallery-grid {
+        grid-template-columns: repeat(auto-fill, minmax(118px, 118px));
+        gap: 8px;
+    }
+
+    .gallery-search-results {
+        grid-template-columns: repeat(auto-fit, minmax(118px, 118px));
+    }
+
+    .gallery-item,
+    .gallery-grid img,
+    .wallet-results-grid img,
+    .wallet-blokchain-frame-crop {
+        width: 118px;
+        height: 118px;
+    }
+
+    .wallet-blokchain-frame {
+        transform: scale(0.2269);
+    }
+
+    .trait-filter-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .trait-filter-control {
+        width: 100%;
+        max-width: none;
+    }
+
+    .trait-filter-select {
+        width: 100%;
+    }
+
+    .gallery-flex img {
+        height: clamp(180px, 60vw, 280px);
+    }
+
+    .gallery-flex-1 img {
+        height: clamp(210px, 56vh, 420px);
+    }
+
+    iframe {
+        width: calc(100% - 6px);
+        border-width: 3px;
+        height: clamp(320px, 68vh, 640px);
+    }
+}
 
 @media (prefers-reduced-motion: reduce) {
     .grid-background {

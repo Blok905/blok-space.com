@@ -881,7 +881,7 @@
 
         const setOrdNodeStatus = function() {
             if (ordNodeBase) {
-                setWalletStatus(walletSearchStatus, `Using ord node: ${ordNodeBase}.`, false);
+                setWalletStatus(walletSearchStatus, '', false);
             } else {
                 setWalletStatus(walletSearchStatus, 'Ord node URL is not configured. Set data-ord-node-base on the <body> element.', true);
             }
