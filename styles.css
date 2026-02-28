@@ -1597,22 +1597,20 @@ footer p {
     border: solid 1px rgba(149, 227, 255, 0.72);
     border-radius: 50%;
     overflow: hidden;
-    isolation: isolate;
-    background: radial-gradient(circle at 36% 30%, #20303c 0%, #02060a 42%, #000 78%);
+    isolation: auto;
+    background: radial-gradient(circle at 36% 30%, #20303c 0%, #02060a 42%, #000 70%, rgba(0, 0, 0, 0) 73%);
     box-shadow:
         0 0 0 2px rgba(5, 14, 26, 0.82),
         inset 0 0 12px rgba(179, 238, 255, 0.12),
         0 0 14px rgba(86, 224, 255, 0.42);
     animation: twitch 3s infinite;
-    -webkit-mask-image: -webkit-radial-gradient(circle, #fff 96%, rgba(255, 255, 255, 0) 100%);
-    mask-image: radial-gradient(circle, #fff 96%, rgba(255, 255, 255, 0) 100%);
-    -webkit-mask-size: 100% 100%;
-    mask-size: 100% 100%;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-    transform-style: preserve-3d;
+    -webkit-clip-path: circle(50% at 50% 50%);
+    clip-path: circle(50% at 50% 50%);
+    contain: layout style;
+    transform: none;
+    -webkit-backface-visibility: visible;
+    backface-visibility: visible;
+    transform-style: flat;
 }
 
 #curves .pupil::before {
@@ -1624,6 +1622,8 @@ footer p {
     height: 18%;
     border-radius: 50%;
     background: radial-gradient(circle, rgba(227, 251, 255, 0.94) 0%, rgba(227, 251, 255, 0) 72%);
+    -webkit-clip-path: circle(50% at 50% 50%);
+    clip-path: circle(50% at 50% 50%);
 }
 
 #curves .pupil::after {
@@ -1634,6 +1634,23 @@ footer p {
     border-radius: 50%;
     background: radial-gradient(circle, rgba(255, 115, 115, 0.95) 0%, rgba(255, 63, 63, 0.8) 45%, rgba(28, 0, 0, 0.9) 100%);
     box-shadow: 0 0 14px rgba(255, 76, 76, 0.48);
+    -webkit-clip-path: circle(50% at 50% 50%);
+    clip-path: circle(50% at 50% 50%);
+}
+
+@media (hover: none) and (pointer: coarse) {
+    #curves .pupil {
+        -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 62%, transparent 63%);
+        mask-image: radial-gradient(circle at 50% 50%, #000 62%, transparent 63%);
+        -webkit-mask-size: 100% 100%;
+        mask-size: 100% 100%;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        box-shadow:
+            0 0 0 2px rgba(5, 14, 26, 0.82),
+            0 0 14px rgba(86, 224, 255, 0.42);
+        contain: none;
+    }
 }
 
 #curves .pupil>img{
