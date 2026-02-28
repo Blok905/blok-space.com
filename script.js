@@ -96,8 +96,10 @@
     function formatBtc(value) {
         const parsed = parseNumber(value);
         if (parsed === null) return '--';
-        const maxFractionDigits = parsed >= 1 ? 2 : 4;
-        return `${parsed.toLocaleString('en-US', { maximumFractionDigits: maxFractionDigits })} BTC`;
+        return `${parsed.toLocaleString('en-US', {
+            minimumFractionDigits: 3,
+            maximumFractionDigits: 3
+        })} ₿`;
     }
 
     function setStatValue(statsWindow, statName, value) {
@@ -1171,6 +1173,55 @@
         collectionStatsRetryTimers.set(statsWindow, retryTimer);
     }
 
+    function syncCollectionStatCardWidth(statsWindow) {
+        const statsGrid = statsWindow?.querySelector('.collection-stats-grid');
+        if (!statsGrid) return;
+
+        const statCards = Array.from(statsGrid.querySelectorAll('.collection-stat'));
+        if (statCards.length === 0) return;
+
+        statsGrid.style.removeProperty('--collection-stat-card-width');
+
+        const firstCardStyle = window.getComputedStyle(statCards[0]);
+        const horizontalPadding = (parseFloat(firstCardStyle.paddingLeft) || 0) + (parseFloat(firstCardStyle.paddingRight) || 0);
+        const horizontalBorder = (parseFloat(firstCardStyle.borderLeftWidth) || 0) + (parseFloat(firstCardStyle.borderRightWidth) || 0);
+        const edgeAllowance = 24;
+
+        let widestTextWidth = 0;
+        statCards.forEach(card => {
+            const labelNode = card.querySelector('.collection-stat-label');
+            const valueNode = card.querySelector('.collection-stat-value');
+            if (labelNode) widestTextWidth = Math.max(widestTextWidth, Math.ceil(labelNode.scrollWidth));
+            if (valueNode) widestTextWidth = Math.max(widestTextWidth, Math.ceil(valueNode.scrollWidth));
+        });
+
+        if (widestTextWidth <= 0) return;
+
+        const desiredWidth = Math.ceil(widestTextWidth + horizontalPadding + horizontalBorder + edgeAllowance);
+        const statsGridStyle = window.getComputedStyle(statsGrid);
+        const gridGap = parseFloat(statsGridStyle.columnGap || statsGridStyle.gap || '0') || 0;
+        const availableWidth = Math.max(1, statsGrid.clientWidth);
+
+        const minCardWidth = 130;
+        const maxCardWidth = 340;
+        const resolvedCardWidth = Math.max(minCardWidth, Math.min(desiredWidth, maxCardWidth));
+        const statCount = Math.max(1, statCards.length);
+        const singleRowMaxCardWidth = Math.floor((availableWidth - (gridGap * (statCount - 1))) / statCount);
+        const canFitSingleRow = singleRowMaxCardWidth >= resolvedCardWidth;
+
+        statsGrid.style.setProperty('--collection-stat-card-width', `${resolvedCardWidth}px`);
+        statsGrid.style.flexWrap = canFitSingleRow ? 'nowrap' : 'wrap';
+    }
+
+    function scheduleCollectionStatCardWidthSync(statsWindow) {
+        if (!statsWindow) return;
+        if (typeof window.requestAnimationFrame === 'function') {
+            window.requestAnimationFrame(() => syncCollectionStatCardWidth(statsWindow));
+            return;
+        }
+        setTimeout(() => syncCollectionStatCardWidth(statsWindow), 0);
+    }
+
     async function refreshCollectionStats(statsWindow, sharedSearchPayload) {
         if (collectionStatsRefreshInProgress.has(statsWindow)) return;
         collectionStatsRefreshInProgress.add(statsWindow);
@@ -1236,6 +1287,7 @@
                 timeStyle: 'short'
             })}`);
             setStatus(statsWindow, '', false);
+            scheduleCollectionStatCardWidthSync(statsWindow);
             clearCollectionStatsRetry(statsWindow);
         } catch (error) {
             clearStats(statsWindow);
@@ -1245,6 +1297,7 @@
                 `Unable to load collection stats right now. Retrying in ${Math.round(collectionStatsRetryDelayMs / 1000)} seconds...`,
                 true
             );
+            scheduleCollectionStatCardWidthSync(statsWindow);
             scheduleCollectionStatsRetry(statsWindow);
             console.error(`Collection stats load failed (${collectionSymbol}):`, error);
         } finally {
@@ -1273,9 +1326,11 @@
 
             const statsRefresh = statsWindow.querySelector('.collection-stats-refresh');
             if (statsRefresh) statsRefresh.remove();
+            scheduleCollectionStatCardWidthSync(statsWindow);
         });
 
         let allCollectionStatsRefreshInProgress = false;
+        let collectionStatsResizeDebounce = null;
 
         const refreshAllCollectionStats = async function() {
             if (allCollectionStatsRefreshInProgress) return;
@@ -1298,6 +1353,13 @@
         };
 
         refreshAllCollectionStats();
+
+        window.addEventListener('resize', () => {
+            clearTimeout(collectionStatsResizeDebounce);
+            collectionStatsResizeDebounce = setTimeout(() => {
+                statsWindows.forEach(scheduleCollectionStatCardWidthSync);
+            }, 120);
+        });
     }
 
     const traitFilterCollectionSymbols = new Set(['blok-boyz', 'blok-space']);
