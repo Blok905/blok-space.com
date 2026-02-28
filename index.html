@@ -440,6 +440,7 @@
             const palindromeReferenceDurationSeconds = 31.2;
             const fallbackCarouselPixelsPerSecond = 180;
             const carouselSpeedScale = 0.8;
+            const eagerEnhancementViewportMultiplier = 1.45;
             const carouselSourcePreloadPerRow = 96;
             const carouselClonePreloadPerRow = 24;
             const carouselHighPriorityPerRow = 18;
@@ -930,15 +931,52 @@
             }
 
             const pendingMagicEdenBindings = [];
+            let magicEdenLookupBySymbolPromise = null;
 
-            function bindMagicEdenLinksInBatches(lookupBySymbol, galleries) {
-                runInBatches(pendingMagicEdenBindings, 72, function(binding) {
-                    ensureMagicEdenItemLink(binding.wrapper, binding.image, lookupBySymbol);
-                }, function() {
-                    galleries.forEach(function(gallery) {
+            function ensureMagicEdenLookupBySymbol() {
+                if (!magicEdenLookupBySymbolPromise) {
+                    magicEdenLookupBySymbolPromise = loadMagicEdenLookupBySymbol().catch(function(error) {
+                        console.warn('Unable to attach Magic Eden item links:', error);
+                        return new Map();
+                    });
+                }
+                return magicEdenLookupBySymbolPromise;
+            }
+
+            function queueMagicEdenBindingRange(startIndex, galleriesToRebuild) {
+                const bindStart = Math.max(0, Number(startIndex) || 0);
+                const targetGalleries = Array.isArray(galleriesToRebuild)
+                    ? galleriesToRebuild.filter(Boolean)
+                    : [];
+
+                if (pendingMagicEdenBindings.length <= bindStart) {
+                    targetGalleries.forEach(function(gallery) {
                         gallery.dispatchEvent(new Event('carousel:rebuild'));
                     });
-                });
+                    return;
+                }
+
+                window.setTimeout(function() {
+                    runWhenIdle(function() {
+                        ensureMagicEdenLookupBySymbol().then(function(lookupBySymbol) {
+                            const bindingsToApply = pendingMagicEdenBindings.slice(bindStart);
+                            if (bindingsToApply.length === 0) {
+                                targetGalleries.forEach(function(gallery) {
+                                    gallery.dispatchEvent(new Event('carousel:rebuild'));
+                                });
+                                return;
+                            }
+
+                            runInBatches(bindingsToApply, 72, function(binding) {
+                                ensureMagicEdenItemLink(binding.wrapper, binding.image, lookupBySymbol);
+                            }, function() {
+                                targetGalleries.forEach(function(gallery) {
+                                    gallery.dispatchEvent(new Event('carousel:rebuild'));
+                                });
+                            });
+                        });
+                    }, 1800);
+                }, 850);
             }
 
             function bindGalleryDownloadDelegation(gallery) {
@@ -1103,8 +1141,33 @@
                 ensureImagePerformanceHints
             );
 
+            function isNearViewport(node, viewportMultiplier) {
+                if (!node || typeof node.getBoundingClientRect !== 'function') return false;
+                const rect = node.getBoundingClientRect();
+                const viewportHeight = Math.max(
+                    window.innerHeight || 0,
+                    document.documentElement ? document.documentElement.clientHeight : 0,
+                    1
+                );
+                const margin = viewportHeight * (Number(viewportMultiplier) || 1);
+                return rect.bottom >= -margin && rect.top <= viewportHeight + margin;
+            }
+
+            const queuedGallerySet = new WeakSet();
+            const completedGallerySet = new WeakSet();
+            const observedGallerySet = new WeakSet();
+            const galleryEnhancementQueue = [];
+            let galleryEnhancementInProgress = false;
+            let deferredGalleryEnhancementObserver = null;
+
             function enhanceGallery(gallery) {
                 return new Promise(function(resolve) {
+                    if (!gallery || completedGallerySet.has(gallery)) {
+                        resolve();
+                        return;
+                    }
+
+                    const magicEdenBindingStart = pendingMagicEdenBindings.length;
                     try {
                         const images = Array.from(gallery.querySelectorAll('img'));
 
@@ -1165,10 +1228,13 @@
                             bindGalleryDownloadDelegation(gallery);
                             bindCarouselRebuild(gallery);
                             buildThreeRowCarousel(gallery);
+                            completedGallerySet.add(gallery);
+                            queueMagicEdenBindingRange(magicEdenBindingStart, [gallery]);
                             resolve();
                         });
                     } catch (error) {
                         console.error('Gallery enhancement failed:', error);
+                        completedGallerySet.add(gallery);
                         resolve();
                     }
                 });
@@ -1176,6 +1242,7 @@
 
             function enhanceArtDrops() {
                 return new Promise(function(resolve) {
+                    const magicEdenBindingStart = pendingMagicEdenBindings.length;
                     const artDropImages = Array.from(document.querySelectorAll('.gallery-flex img'));
                     runInBatches(artDropImages, 72, function(img) {
                         ensureImagePerformanceHints(img);
@@ -1227,13 +1294,72 @@
                             wrapper: wrapper,
                             image: img
                         });
-                    }, resolve);
+                    }, function() {
+                        queueMagicEdenBindingRange(magicEdenBindingStart, []);
+                        resolve();
+                    });
                 });
             }
 
-            const galleryEnhancementTasks = galleries.map(function(gallery) {
-                return enhanceGallery(gallery);
-            });
+            function processGalleryEnhancementQueue() {
+                if (galleryEnhancementInProgress) return;
+                const nextGallery = galleryEnhancementQueue.shift();
+                if (!nextGallery) return;
+
+                galleryEnhancementInProgress = true;
+                enhanceGallery(nextGallery).finally(function() {
+                    galleryEnhancementInProgress = false;
+                    processGalleryEnhancementQueue();
+                });
+            }
+
+            function enqueueGalleryEnhancement(gallery) {
+                if (!gallery || completedGallerySet.has(gallery) || queuedGallerySet.has(gallery)) return;
+                queuedGallerySet.add(gallery);
+                galleryEnhancementQueue.push(gallery);
+                processGalleryEnhancementQueue();
+            }
+
+            function getDeferredGalleryEnhancementObserver() {
+                if (deferredGalleryEnhancementObserver) return deferredGalleryEnhancementObserver;
+                if (typeof window.IntersectionObserver !== 'function') return null;
+
+                deferredGalleryEnhancementObserver = new IntersectionObserver(function(entries, observer) {
+                    entries.forEach(function(entry) {
+                        if (!entry.isIntersecting) return;
+                        observer.unobserve(entry.target);
+                        observedGallerySet.delete(entry.target);
+                        enqueueGalleryEnhancement(entry.target);
+                    });
+                }, {
+                    root: null,
+                    rootMargin: '700px 0px',
+                    threshold: 0.01
+                });
+
+                return deferredGalleryEnhancementObserver;
+            }
+
+            function scheduleGalleryEnhancement(gallery) {
+                if (!gallery || completedGallerySet.has(gallery)) return;
+
+                if (isNearViewport(gallery, eagerEnhancementViewportMultiplier)) {
+                    enqueueGalleryEnhancement(gallery);
+                    return;
+                }
+
+                const observer = getDeferredGalleryEnhancementObserver();
+                if (observer) {
+                    if (observedGallerySet.has(gallery)) return;
+                    observedGallerySet.add(gallery);
+                    observer.observe(gallery);
+                    return;
+                }
+
+                runWhenIdle(function() {
+                    enqueueGalleryEnhancement(gallery);
+                }, 2200);
+            }
 
             const artDropsGallery = document.querySelector('.gallery-flex');
             if (artDropsGallery && artDropsGallery.dataset.downloadDelegated !== 'true') {
@@ -1258,15 +1384,16 @@
                 artDropsGallery.dataset.downloadDelegated = 'true';
             }
 
-            Promise.all(galleryEnhancementTasks.concat([enhanceArtDrops()])).then(function() {
-                runWhenIdle(function() {
-                    loadMagicEdenLookupBySymbol().then(function(magicEdenLookupBySymbol) {
-                        bindMagicEdenLinksInBatches(magicEdenLookupBySymbol, galleries);
-                    }).catch(function(error) {
-                        console.warn('Unable to attach Magic Eden item links:', error);
-                    });
-                }, 1200);
+            galleries.forEach(function(gallery) {
+                scheduleGalleryEnhancement(gallery);
             });
+            window.addEventListener('resize', function() {
+                galleries.forEach(function(gallery) {
+                    scheduleGalleryEnhancement(gallery);
+                });
+            });
+
+            void enhanceArtDrops();
         });
     </script>
     <script>
@@ -1368,9 +1495,16 @@
             var rafId = 0;
             var resizeTimer = 0;
             var motionQuery = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+            var coarsePointerQuery = window.matchMedia ? window.matchMedia('(pointer: coarse)') : null;
+            var narrowViewportQuery = window.matchMedia ? window.matchMedia('(max-width: 900px)') : null;
             var spawnEdgeBag = [];
             var constrainedFrameMs = 0;
             var lastStepTime = 0;
+            var startupWindowMs = 9000;
+            var startupBeganAt = (window.performance && typeof window.performance.now === 'function')
+                ? window.performance.now()
+                : Date.now();
+            var startupPhaseComplete = false;
 
             function rand(min, max) {
                 return min + Math.random() * (max - min);
@@ -1431,8 +1565,24 @@
                 return spawnEdgeBag.pop();
             }
 
-            function isPerformanceConstrained() {
-                return false;
+            function getNowMs() {
+                if (window.performance && typeof window.performance.now === 'function') {
+                    return window.performance.now();
+                }
+                return Date.now();
+            }
+
+            function isStartupPhase(nowMs) {
+                return (nowMs - startupBeganAt) < startupWindowMs;
+            }
+
+            function isPerformanceConstrained(nowMs) {
+                var timeValue = typeof nowMs === 'number' ? nowMs : getNowMs();
+                return Boolean(
+                    isStartupPhase(timeValue)
+                    || (coarsePointerQuery && coarsePointerQuery.matches)
+                    || (narrowViewportQuery && narrowViewportQuery.matches)
+                );
             }
 
             function readGridSize() {
@@ -1558,11 +1708,14 @@
                 return node;
             }
 
-            function setNodeCount() {
-                var constrained = isPerformanceConstrained();
+            function setNodeCount(nowMs) {
+                var constrained = isPerformanceConstrained(nowMs);
                 var targetCount = constrained
                     ? Math.max(14, Math.min(48, Math.round((width * playHeight) / 68000)))
                     : Math.max(44, Math.min(160, Math.round((width * playHeight) / 34000)));
+                if (isStartupPhase(typeof nowMs === 'number' ? nowMs : getNowMs())) {
+                    targetCount = Math.min(targetCount, 40);
+                }
 
                 while (nodes.length < targetCount) {
                     nodes.push(createNode());
@@ -1574,10 +1727,11 @@
             }
 
             function rebuildBounds() {
+                var nowMs = getNowMs();
                 gridSize = readGridSize();
                 width = Math.max(1, background.clientWidth);
                 height = Math.max(1, background.clientHeight);
-                constrainedFrameMs = isPerformanceConstrained() ? 34 : 0;
+                constrainedFrameMs = isPerformanceConstrained(nowMs) ? 34 : 0;
                 var headerElement = document.querySelector('header');
                 playTop = headerElement ? Math.max(0, Math.round(headerElement.offsetHeight)) : 0;
                 playHeight = Math.max(1, height - playTop);
@@ -1588,7 +1742,7 @@
                 layer.style.top = playTop + 'px';
                 layer.style.height = playHeight + 'px';
                 layer.style.bottom = 'auto';
-                setNodeCount();
+                setNodeCount(nowMs);
 
                 nodes.forEach(function(node) {
                     node.trail = Math.max(gridSize * 1.1, node.trail);
@@ -1600,6 +1754,17 @@
             }
 
             function tick(time) {
+                if (!startupPhaseComplete && !isStartupPhase(time)) {
+                    startupPhaseComplete = true;
+                    rebuildBounds();
+                }
+
+                var desiredFrameMs = isPerformanceConstrained(time) ? 34 : 0;
+                if (desiredFrameMs !== constrainedFrameMs) {
+                    constrainedFrameMs = desiredFrameMs;
+                    lastStepTime = 0;
+                }
+
                 if (constrainedFrameMs > 0 && lastStepTime && (time - lastStepTime) < constrainedFrameMs) {
                     rafId = window.requestAnimationFrame(tick);
                     return;
@@ -1668,13 +1833,38 @@
                 }
             }
 
+            if (coarsePointerQuery) {
+                if (typeof coarsePointerQuery.addEventListener === 'function') {
+                    coarsePointerQuery.addEventListener('change', applyMotionPreference);
+                } else if (typeof coarsePointerQuery.addListener === 'function') {
+                    coarsePointerQuery.addListener(applyMotionPreference);
+                }
+            }
+
+            if (narrowViewportQuery) {
+                if (typeof narrowViewportQuery.addEventListener === 'function') {
+                    narrowViewportQuery.addEventListener('change', applyMotionPreference);
+                } else if (typeof narrowViewportQuery.addListener === 'function') {
+                    narrowViewportQuery.addListener(applyMotionPreference);
+                }
+            }
+
             window.addEventListener('resize', onResize);
             document.addEventListener('visibilitychange', applyMotionPreference);
             window.addEventListener('pagehide', stop, { once: true });
-            window.addEventListener('load', rebuildBounds, { once: true });
 
-            rebuildBounds();
-            applyMotionPreference();
+            function startTronNodesAfterLoad() {
+                window.setTimeout(function() {
+                    rebuildBounds();
+                    applyMotionPreference();
+                }, 650);
+            }
+
+            if (document.readyState === 'complete') {
+                startTronNodesAfterLoad();
+            } else {
+                window.addEventListener('load', startTronNodesAfterLoad, { once: true });
+            }
         })();
     </script>
 </body>
