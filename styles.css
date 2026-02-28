@@ -1566,6 +1566,9 @@ footer p {
         0 0 20px rgba(73, 224, 255, 0.55);
     animation: twitch 3s infinite;
     will-change: transform;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    transform-style: preserve-3d;
 }
 
 #curves .inner-eye::before {
@@ -1601,6 +1604,15 @@ footer p {
         inset 0 0 12px rgba(179, 238, 255, 0.12),
         0 0 14px rgba(86, 224, 255, 0.42);
     animation: twitch 3s infinite;
+    -webkit-mask-image: -webkit-radial-gradient(circle, #fff 96%, rgba(255, 255, 255, 0) 100%);
+    mask-image: radial-gradient(circle, #fff 96%, rgba(255, 255, 255, 0) 100%);
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    transform-style: preserve-3d;
 }
 
 #curves .pupil::before {

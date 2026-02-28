@@ -1852,19 +1852,10 @@
             window.addEventListener('resize', onResize);
             document.addEventListener('visibilitychange', applyMotionPreference);
             window.addEventListener('pagehide', stop, { once: true });
+            window.addEventListener('load', rebuildBounds, { once: true });
 
-            function startTronNodesAfterLoad() {
-                window.setTimeout(function() {
-                    rebuildBounds();
-                    applyMotionPreference();
-                }, 650);
-            }
-
-            if (document.readyState === 'complete') {
-                startTronNodesAfterLoad();
-            } else {
-                window.addEventListener('load', startTronNodesAfterLoad, { once: true });
-            }
+            rebuildBounds();
+            applyMotionPreference();
         })();
     </script>
 </body>
