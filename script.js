@@ -46,8 +46,8 @@ document.addEventListener("DOMContentLoaded", function() {
     const collectionStatsByIdApi = 'https://api-mainnet.magiceden.dev/collection_stats/stats?chain=bitcoin&collectionId=';
     const corsProxyBase = 'https://api.allorigins.win/raw?url=';
     const ordProxyBases = [
-        'https://api.allorigins.win/raw?url=',
-        'https://corsproxy.io/?'
+        'https://api.codetabs.com/v1/proxy/?quest=',
+        'https://api.allorigins.win/raw?url='
     ];
 
     const collectionSupplyOverrides = {
