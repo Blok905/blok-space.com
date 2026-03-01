@@ -881,8 +881,8 @@ document.addEventListener("DOMContentLoaded", function() {
             const editionNumber = inferEditionNumber(entry, index, displayName);
             const resolvedImage = resolveMetadataImage(collection, entry, imageLookup)
                 || resolveFallbackCollectionImage(editionNumber);
-            const imageSrc = resolvedImage?.src || collection.fallbackImageSrc || '';
-            if (!imageSrc) return;
+            const imageSrc = resolvedImage?.src || collection.fallbackImageSrc || magicEdenIconPath;
+            const imageAlt = resolvedImage?.alt || collection.fallbackImageAlt || displayName;
 
             byInscriptionId.set(inscriptionId, {
                 collectionSymbol: collection.symbol,
@@ -890,7 +890,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 inscriptionId,
                 displayName,
                 imageSrc,
-                imageAlt: resolvedImage?.alt || displayName,
+                imageAlt,
                 editionNumber
             });
         });
@@ -1054,11 +1054,23 @@ document.addEventListener("DOMContentLoaded", function() {
                     matchesByCollection.get(matchedEntry.collectionSymbol).push(matchedEntry);
                 });
 
+                const walletCount = walletInscriptionIds.length;
                 const totalMatches = renderWalletSearchResults(walletSearchResults, collectionIndexes, matchesByCollection);
                 if (totalMatches === 0) {
-                    setWalletStatus(walletSearchStatus, 'No inscriptions from your tracked collections were found in this wallet.', false);
+                    if (walletCount === 0) {
+                        setWalletStatus(
+                            walletSearchStatus,
+                            'Ord lookup returned 0 inscriptions for this address. Try again in a few seconds.',
+                            false
+                        );
+                    } else {
+                        setWalletStatus(
+                            walletSearchStatus,
+                            `No tracked collection matches were found among ${walletCount} wallet inscription${walletCount === 1 ? '' : 's'}.`,
+                            false
+                        );
+                    }
                 } else {
-                    const walletCount = walletInscriptionIds.length;
                     setWalletStatus(
                         walletSearchStatus,
                         `Found ${totalMatches} matching inscription${totalMatches === 1 ? '' : 's'} out of ${walletCount} wallet inscription${walletCount === 1 ? '' : 's'}.`,
