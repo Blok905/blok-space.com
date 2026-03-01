@@ -89,7 +89,6 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     ];
     const magicEdenItemBaseUrl = 'https://magiceden.io/ordinals/item-details/';
-    const magicEdenMarketplaceBaseUrl = 'https://magiceden.io/ordinals/marketplace/';
     const magicEdenIconPath = './Images/ME.png';
 
     function sanitizeOrdNodeBase(value) {
@@ -396,33 +395,6 @@ document.addEventListener("DOMContentLoaded", function() {
         setTimeout(() => control.blur(), 0);
     }
 
-    function buildCollectionMarketplaceLink(collectionSymbol, iconClassName) {
-        const normalizedSymbol = String(collectionSymbol || '').trim().toLowerCase();
-        if (!normalizedSymbol) return null;
-
-        const marketplaceLink = document.createElement('a');
-        marketplaceLink.href = `${magicEdenMarketplaceBaseUrl}${normalizedSymbol}`;
-        marketplaceLink.target = '_blank';
-        marketplaceLink.rel = 'noopener noreferrer';
-        marketplaceLink.dataset.marketplaceSymbol = normalizedSymbol;
-
-        const icon = document.createElement('img');
-        icon.className = iconClassName || 'ME';
-        icon.src = magicEdenIconPath;
-        icon.alt = 'Magic Eden';
-        marketplaceLink.appendChild(icon);
-
-        return marketplaceLink;
-    }
-
-    function findCollectionMarketplaceLink(collectionSymbol) {
-        const normalizedSymbol = String(collectionSymbol || '').trim().toLowerCase();
-        if (!normalizedSymbol) return null;
-        return document.querySelector(
-            `a[data-marketplace-symbol="${normalizedSymbol}"], a[href*="/marketplace/${normalizedSymbol}"]`
-        );
-    }
-
     function createWalletResultCard(match) {
         const resultCard = document.createElement('div');
         resultCard.className = 'gallery-item';
@@ -606,38 +578,6 @@ document.addEventListener("DOMContentLoaded", function() {
         return Array.from(ids);
     }
 
-    function inferOrdResponseFailureHint(responseText) {
-        const normalizedText = String(responseText || '').toLowerCase();
-        if (!normalizedText) return '';
-
-        if (
-            normalizedText.includes('direct ip access not allowed')
-            || (normalizedText.includes('cloudflare') && normalizedText.includes('error code 1003'))
-        ) {
-            return 'Proxy blocked direct-IP access to the ord node.';
-        }
-
-        if (normalizedText.includes('<!doctype html') || normalizedText.includes('<html')) {
-            return 'Received an HTML error page instead of ord data.';
-        }
-
-        return '';
-    }
-
-    function isLikelyOrdAddressPage(responseText) {
-        const normalizedText = String(responseText || '').toLowerCase();
-        if (!normalizedText) return false;
-
-        const hasAddressHeading = normalizedText.includes('<h1>address ')
-            || normalizedText.includes('title: address ');
-        const hasOrdNavigation = normalizedText.includes('ordinals<sup>beta</sup>')
-            || normalizedText.includes(' title=home>ordinals');
-        const hasInscriptionsSection = normalizedText.includes('<dt>inscriptions</dt>')
-            || normalizedText.includes(' inscriptions[](');
-
-        return hasAddressHeading && (hasOrdNavigation || hasInscriptionsSection);
-    }
-
     async function fetchOrdJsonOrThrow(endpoint, requestLabel) {
         const requestUrls = buildOrdRequestUrls(endpoint);
         let lastError = null;
@@ -703,22 +643,21 @@ document.addEventListener("DOMContentLoaded", function() {
                     return { inscriptions: extractedIds };
                 }
 
-                if (requestLabel === 'address' && isLikelyOrdAddressPage(responseText)) {
-                    return { inscriptions: [] };
-                }
-
-                const responseHint = inferOrdResponseFailureHint(responseText);
-                const requestError = new Error(
-                    responseHint
-                        ? `Ord node ${requestLabel} lookup failed. ${responseHint}`
-                        : `Ord node ${requestLabel} endpoint did not return JSON.`
-                );
+                const requestError = new Error(`Ord node ${requestLabel} endpoint did not return JSON.`);
                 requestError.status = response.status;
                 requestError.endpoint = endpoint;
                 requestError.requestLabel = requestLabel;
                 requestError.responseText = responseText;
                 lastError = requestError;
             }
+        }
+
+        if (
+            (requestLabel === 'address' || requestLabel === 'outputs')
+            && lastError
+            && /did not return json/i.test(String(lastError.message || ''))
+        ) {
+            return { inscriptions: [] };
         }
 
         if (lastError && lastError instanceof Error && lastError.requestLabel) {
@@ -1678,17 +1617,8 @@ document.addEventListener("DOMContentLoaded", function() {
         entries.forEach((entry, index) => {
             const collectionId = buildMetadataCollectionId(entry, index);
             const inscriptionId = normalizeInscriptionId(entry?.id);
-            if (!isLikelyInscriptionId(inscriptionId)) return;
-
-            if (collectionId && !byCollectionId.has(collectionId)) {
-                byCollectionId.set(collectionId, inscriptionId);
-            }
-
-            const metadataName = String(entry?.meta?.name || '').trim();
-            getNameCandidates(metadataName).forEach(candidateKey => {
-                if (!candidateKey || byCollectionId.has(candidateKey)) return;
-                byCollectionId.set(candidateKey, inscriptionId);
-            });
+            if (!collectionId || !isLikelyInscriptionId(inscriptionId)) return;
+            if (!byCollectionId.has(collectionId)) byCollectionId.set(collectionId, inscriptionId);
         });
 
         if ((normalizedSymbol === 'blok-boyz' || normalizedSymbol === 'blok-space') && byCollectionId.size === 0) {
@@ -1701,25 +1631,6 @@ document.addEventListener("DOMContentLoaded", function() {
         }
 
         return byCollectionId;
-    }
-
-    function resolveInscriptionIdForGalleryImage(metadataIndex, img) {
-        if (!metadataIndex || typeof metadataIndex.get !== 'function' || !img) return '';
-
-        const candidateKeys = [];
-        const collectionId = getCollectionIdFromImageElement(img);
-        if (collectionId) candidateKeys.push(collectionId);
-
-        getNameCandidates(getImageDisplayTitle(img)).forEach(candidate => candidateKeys.push(candidate));
-        getNameCandidates(getImageStemFromSrc(getImageSourceUrl(img))).forEach(candidate => candidateKeys.push(candidate));
-
-        const uniqueKeys = Array.from(new Set(candidateKeys.filter(Boolean)));
-        for (const candidateKey of uniqueKeys) {
-            const matchedInscriptionId = normalizeInscriptionId(metadataIndex.get(candidateKey));
-            if (isLikelyInscriptionId(matchedInscriptionId)) return matchedInscriptionId;
-        }
-
-        return '';
     }
 
     async function loadGalleryMetadataIndex(symbol) {
@@ -1780,22 +1691,8 @@ document.addEventListener("DOMContentLoaded", function() {
             const img = item.querySelector('img');
             if (!img) return;
 
-            const inscriptionId = resolveInscriptionIdForGalleryImage(metadataIndex, img);
-            ensureMagicEdenLink(item, inscriptionId, getImageDisplayTitle(img));
-        });
-    }
-
-    async function hydrateArtDropsMagicEdenLinks(artDropsGallery) {
-        if (!artDropsGallery) return;
-
-        const metadataIndex = await loadGalleryMetadataIndex('art-drops');
-        const galleryItems = Array.from(artDropsGallery.querySelectorAll('.gallery-flex-item'));
-
-        galleryItems.forEach(item => {
-            const img = item.querySelector('img');
-            if (!img) return;
-
-            const inscriptionId = resolveInscriptionIdForGalleryImage(metadataIndex, img);
+            const collectionId = getCollectionIdFromImageElement(img);
+            const inscriptionId = metadataIndex.get(collectionId);
             ensureMagicEdenLink(item, inscriptionId, getImageDisplayTitle(img));
         });
     }
@@ -1961,8 +1858,6 @@ document.addEventListener("DOMContentLoaded", function() {
                 titleNode.textContent = getImageDisplayTitle(image);
             }
         });
-
-        void hydrateArtDropsMagicEdenLinks(artDropsGallery);
     }
 
     function enhanceCollectionGallery(grid) {
@@ -2240,14 +2135,6 @@ document.addEventListener("DOMContentLoaded", function() {
                     break;
                 }
                 marketplaceLink = marketplaceLink.previousElementSibling;
-            }
-
-            if (!marketplaceLink) {
-                marketplaceLink = findCollectionMarketplaceLink(gridSymbol);
-            }
-
-            if (!marketplaceLink) {
-                marketplaceLink = buildCollectionMarketplaceLink(gridSymbol, 'ME');
             }
 
             if (marketplaceLink && marketplaceLink.tagName === 'A') {
@@ -2604,29 +2491,8 @@ document.addEventListener("DOMContentLoaded", function() {
     // link directly above media by placing stats just above that link.
     ['blokchain-surveillance', 'art-drops'].forEach(collectionSymbol => {
         const statsWindow = document.querySelector(`.collection-stats-window[data-collection-symbol="${collectionSymbol}"]`);
-        if (!statsWindow) return;
-
-        let marketplaceLink = findCollectionMarketplaceLink(collectionSymbol);
-        if (!marketplaceLink) {
-            const iconClassName = collectionSymbol === 'art-drops' || collectionSymbol === 'blokchain-surveillance'
-                ? 'ME-alt'
-                : 'ME';
-            marketplaceLink = buildCollectionMarketplaceLink(collectionSymbol, iconClassName);
-        }
-
-        if (!marketplaceLink) return;
-
-        if (!marketplaceLink.isConnected) {
-            const mediaNode = collectionSymbol === 'blokchain-surveillance'
-                ? document.getElementById('blokchain-main-frame')
-                : document.querySelector('.gallery-flex');
-            if (mediaNode?.parentNode) {
-                mediaNode.insertAdjacentElement('beforebegin', marketplaceLink);
-            } else {
-                statsWindow.insertAdjacentElement('afterend', marketplaceLink);
-            }
-        }
-
+        const marketplaceLink = document.querySelector(`a[href*="/marketplace/${collectionSymbol}"]`);
+        if (!statsWindow || !marketplaceLink) return;
         marketplaceLink.insertAdjacentElement('beforebegin', statsWindow);
     });
 });
