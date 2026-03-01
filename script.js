@@ -282,6 +282,13 @@ document.addEventListener("DOMContentLoaded", function() {
         return /^[123mn2][1-9A-HJ-NP-Za-km-z]{25,62}$/.test(address);
     }
 
+    function normalizeBitcoinAddressForLookup(value) {
+        const address = String(value || '').trim();
+        if (!address) return '';
+        if (/^(bc1|tb1|bcrt1)/i.test(address)) return address.toLowerCase();
+        return address;
+    }
+
     function extractEditionNumber(value) {
         const normalized = String(value || '').trim();
         if (!normalized) return null;
@@ -642,6 +649,29 @@ document.addEventListener("DOMContentLoaded", function() {
         return hasAddressHeading && (hasOrdNavigation || hasInscriptionsSection);
     }
 
+    function isLikelyOrdAddressJsonPayload(payload) {
+        if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return false;
+        return (
+            Object.prototype.hasOwnProperty.call(payload, 'sat_balance')
+            || Array.isArray(payload.inscriptions)
+            || Array.isArray(payload.outputs)
+            || Array.isArray(payload.runes_balances)
+        );
+    }
+
+    function isLikelyOrdOutputsJsonPayload(payload) {
+        if (!Array.isArray(payload)) return false;
+        if (payload.length === 0) return true;
+        return payload.some(item => {
+            if (!item || typeof item !== 'object') return false;
+            return (
+                typeof item.outpoint === 'string'
+                || typeof item.address === 'string'
+                || Array.isArray(item.inscriptions)
+            );
+        });
+    }
+
     async function fetchOrdJsonOrThrow(endpoint, requestLabel) {
         const requestUrls = buildOrdRequestUrls(endpoint);
         let lastError = null;
@@ -700,7 +730,28 @@ document.addEventListener("DOMContentLoaded", function() {
             }
 
             try {
-                return JSON.parse(responseText);
+                const parsedPayload = JSON.parse(responseText);
+                if (requestLabel === 'address') {
+                    const extractedIds = getWalletInscriptionIds(parsedPayload);
+                    if (extractedIds.length > 0 || isLikelyOrdAddressJsonPayload(parsedPayload)) {
+                        return parsedPayload;
+                    }
+
+                    lastError = new Error('Ord node address response JSON was not recognized as an address payload.');
+                    continue;
+                }
+
+                if (requestLabel === 'outputs') {
+                    const extractedIds = getWalletInscriptionIds(parsedPayload);
+                    if (extractedIds.length > 0 || isLikelyOrdOutputsJsonPayload(parsedPayload)) {
+                        return parsedPayload;
+                    }
+
+                    lastError = new Error('Ord node outputs response JSON was not recognized as an outputs payload.');
+                    continue;
+                }
+
+                return parsedPayload;
             } catch (error) {
                 const extractedIds = extractInscriptionIdsFromResponseText(responseText);
                 if ((requestLabel === 'address' || requestLabel === 'outputs') && extractedIds.length > 0) {
@@ -749,6 +800,8 @@ document.addEventListener("DOMContentLoaded", function() {
             throw new Error('Set your ord node URL before searching (for example: http://127.0.0.1:80).');
         }
 
+        const normalizedAddress = normalizeBitcoinAddressForLookup(address);
+
         const probeOrdServer = async function(baseUrl) {
             const probeEndpoints = [
                 `${baseUrl}/blockheight`,
@@ -772,8 +825,8 @@ document.addEventListener("DOMContentLoaded", function() {
             return { reachable: false, endpoint: '' };
         };
 
-        const addressEndpoint = `${ordNodeBase}/address/${encodeURIComponent(address)}`;
-        const outputsEndpoint = `${ordNodeBase}/outputs/${encodeURIComponent(address)}?type=inscribed`;
+        const addressEndpoint = `${ordNodeBase}/address/${encodeURIComponent(normalizedAddress)}`;
+        const outputsEndpoint = `${ordNodeBase}/outputs/${encodeURIComponent(normalizedAddress)}?type=inscribed`;
 
         let payload = null;
         let inscriptionIds = [];
