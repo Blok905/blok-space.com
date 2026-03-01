@@ -205,11 +205,11 @@ document.addEventListener("DOMContentLoaded", function() {
     function buildOrdRequestUrls(endpoint) {
         const requestUrls = [endpoint];
         if (shouldUseOrdProxyFallback(endpoint)) {
+            const jinaProxyUrl = buildJinaProxyUrl(endpoint);
+            if (jinaProxyUrl) requestUrls.push(jinaProxyUrl);
             ordProxyBases.forEach(proxyBase => {
                 requestUrls.push(`${proxyBase}${encodeURIComponent(endpoint)}`);
             });
-            const jinaProxyUrl = buildJinaProxyUrl(endpoint);
-            if (jinaProxyUrl) requestUrls.push(jinaProxyUrl);
         }
         return Array.from(new Set(requestUrls.filter(Boolean)));
     }
@@ -619,6 +619,10 @@ document.addEventListener("DOMContentLoaded", function() {
 
         if (normalizedText.includes('<!doctype html') || normalizedText.includes('<html')) {
             return 'Received an HTML error page instead of ord data.';
+        }
+
+        if (normalizedText.includes('500 internal server error')) {
+            return 'Proxy returned a 500 error page.';
         }
 
         return '';
