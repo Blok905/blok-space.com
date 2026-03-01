@@ -255,12 +255,6 @@ p {
     text-align: center;
 }
 
-.wallet-search-copy {
-    margin: 8px 0 0;
-    color: #f2c07f;
-    font-size: var(--site-type-p-size);
-}
-
 .wallet-search-form {
     width: 100%;
     margin-top: 12px;
@@ -275,7 +269,7 @@ p {
     font-size: var(--site-type-p-size);
     text-transform: uppercase;
     letter-spacing: normal;
-    font-weight: 700;
+    font-weight: 400;
     color: #f2c07f;
     text-align: center;
 }
@@ -303,6 +297,7 @@ p {
     border-radius: 5px;
     text-align: center;
     outline: none;
+    font-weight: 400;
     transition: box-shadow 0.3s;
 }
 
@@ -339,7 +334,7 @@ p {
     text-align: center;
     color: #f2c07f;
     font-size: var(--site-type-p-size);
-    font-weight: 700;
+    font-weight: 400;
     letter-spacing: normal;
 }
 
@@ -523,11 +518,7 @@ p {
     cursor: wait;
 }
 
-/* Force wallet + collection-stats copy to match paragraph typography exactly. */
-.wallet-search-copy,
-.wallet-search-label,
-.wallet-search-input,
-.wallet-search-status,
+/* Force collection/trait copy plus wallet result titles to match paragraph typography exactly. */
 .wallet-result-title,
 .collection-stats-updated,
 .collection-stat-label,
@@ -542,6 +533,13 @@ p {
     font-weight: 700 !important;
     letter-spacing: 0 !important;
     line-height: 1 !important;
+}
+
+/* Wallet search UI text should stay regular weight. */
+.wallet-search-label,
+.wallet-search-input,
+.wallet-search-status {
+    font-weight: 400 !important;
 }
 
 /* Keep traits + non-result collection stats non-bold. */
@@ -906,14 +904,6 @@ footer p {
     align-items: flex-start;
 }
 
-.gallery-flex-1 {
-    justify-content: center;
-    display: flex;
-    flex-wrap: wrap;
-    flex-direction: row;
-    gap: 10px;
-}
-
 .gallery-flex img {
     width: 100%;
     height: auto;
@@ -965,19 +955,6 @@ footer p {
 .gallery-flex-item:focus-within .image-title {
     opacity: 1;
     visibility: visible;
-}
-
-.gallery-flex-1 img {
-    height: 75vh;
-}
-
-@keyframes glow {
-    from {
-        text-shadow: 0 0 10px #D77907, 0 0 20px #D77907, 0 0 30px #D77907, 0 0 40px #D77907, 0 0 50px #D77907, 0 0 60px #D77907, 0 0 70px #D77907;
-    }
-    to {
-        text-shadow: 0 0 20px #D77907, 0 0 30px #D77907, 0 0 40px #D77907, 0 0 50px #D77907, 0 0 60px #D77907, 0 0 70px #D77907, 0 0 80px #D77907;
-    }
 }
 
 @keyframes glitch-a {
@@ -1235,221 +1212,6 @@ footer p {
     }
 }
 
-@keyframes h1-glitch-jitter {
-    0%,
-    8%,
-    24%,
-    25%,
-    63%,
-    64%,
-    100% {
-        transform: translate(0, 0);
-        filter: none;
-    }
-    9% {
-        transform: translate(-1px, 0);
-    }
-    10% {
-        transform: translate(2px, 1px);
-    }
-    11% {
-        transform: translate(-2px, -1px);
-    }
-    12% {
-        transform: translate(0, 0);
-    }
-    36% {
-        transform: translate(1px, -1px);
-    }
-    37% {
-        transform: translate(-1px, 1px);
-    }
-    38% {
-        transform: translate(0, 0);
-    }
-    72% {
-        transform: translate(-3px, 1px);
-        filter: brightness(1.1);
-    }
-    73% {
-        transform: translate(3px, -1px);
-    }
-    74% {
-        transform: translate(0, 0);
-        filter: none;
-    }
-    91% {
-        filter: brightness(1.14);
-    }
-    92% {
-        filter: none;
-    }
-}
-
-@keyframes h1-glitch-a {
-    0%,
-    7%,
-    11%,
-    29%,
-    33%,
-    55%,
-    59%,
-    86%,
-    100% {
-        clip-path: inset(0 0 0 0);
-        transform: translate(2px, -1px);
-    }
-    8% {
-        clip-path: inset(12% 0 70% 0);
-        transform: translate(4px, -2px);
-    }
-    9% {
-        clip-path: inset(72% 0 6% 0);
-        transform: translate(-3px, 1px);
-    }
-    10% {
-        clip-path: inset(44% 0 32% 0);
-        transform: translate(1px, -1px);
-    }
-    30% {
-        clip-path: inset(80% 0 2% 0);
-        transform: translate(3px, -1px);
-    }
-    31% {
-        clip-path: inset(4% 0 82% 0);
-        transform: translate(-2px, 2px);
-    }
-    32% {
-        clip-path: inset(58% 0 20% 0);
-        transform: translate(2px, -2px);
-    }
-    56% {
-        clip-path: inset(22% 0 54% 0);
-        transform: translate(-4px, 1px);
-    }
-    57% {
-        clip-path: inset(68% 0 10% 0);
-        transform: translate(4px, -1px);
-    }
-    58% {
-        clip-path: inset(40% 0 38% 0);
-        transform: translate(-1px, 1px);
-    }
-    87% {
-        clip-path: inset(88% 0 0 0);
-        transform: translate(3px, 0);
-    }
-    88% {
-        clip-path: inset(10% 0 74% 0);
-        transform: translate(-3px, 0);
-    }
-}
-
-@keyframes h1-glitch-b {
-    0%,
-    5%,
-    12%,
-    27%,
-    35%,
-    52%,
-    61%,
-    82%,
-    100% {
-        clip-path: inset(0 0 0 0);
-        transform: translate(-2px, 1px);
-    }
-    6% {
-        clip-path: inset(66% 0 10% 0);
-        transform: translate(-4px, 1px);
-    }
-    7% {
-        clip-path: inset(6% 0 80% 0);
-        transform: translate(2px, -2px);
-    }
-    8% {
-        clip-path: inset(38% 0 34% 0);
-        transform: translate(-1px, 2px);
-    }
-    28% {
-        clip-path: inset(18% 0 62% 0);
-        transform: translate(3px, -1px);
-    }
-    29% {
-        clip-path: inset(74% 0 8% 0);
-        transform: translate(-3px, 1px);
-    }
-    30% {
-        clip-path: inset(48% 0 24% 0);
-        transform: translate(1px, -1px);
-    }
-    53% {
-        clip-path: inset(2% 0 86% 0);
-        transform: translate(4px, -1px);
-    }
-    54% {
-        clip-path: inset(82% 0 4% 0);
-        transform: translate(-4px, 1px);
-    }
-    55% {
-        clip-path: inset(30% 0 42% 0);
-        transform: translate(2px, 0);
-    }
-    83% {
-        clip-path: inset(58% 0 16% 0);
-        transform: translate(-3px, -1px);
-    }
-    84% {
-        clip-path: inset(14% 0 72% 0);
-        transform: translate(3px, 1px);
-    }
-}
-
-@keyframes h1-glitch-flash-a {
-    0%,
-    66%,
-    100% {
-        opacity: 0;
-    }
-    67%,
-    68% {
-        opacity: 0.72;
-    }
-    69%,
-    94% {
-        opacity: 0;
-    }
-    95%,
-    96% {
-        opacity: 0.56;
-    }
-    97% {
-        opacity: 0;
-    }
-}
-
-@keyframes h1-glitch-flash-b {
-    0%,
-    57%,
-    100% {
-        opacity: 0;
-    }
-    58%,
-    59% {
-        opacity: 0.66;
-    }
-    60%,
-    86% {
-        opacity: 0;
-    }
-    87%,
-    88% {
-        opacity: 0.5;
-    }
-    89% {
-        opacity: 0;
-    }
-}
-
 @keyframes walletSearchSpinnerSpin {
     to {
         transform: translate(calc(-100% - 10px), -50%) rotate(360deg);
@@ -1483,32 +1245,6 @@ footer p {
     40% { transform: translate(5px, 5px); }
     60% { transform: translate(-5px, 5px); }
     80% { transform: translate(5px, -5px); }
-}
-
-@keyframes lensScan {
-    0%, 100% { background-position: 0 0, 0 0; }
-    50% { background-position: 0 8px, 100% 0; }
-}
-
-@keyframes irisRotateClockwise {
-    to { transform: rotate(360deg); }
-}
-
-@keyframes irisRotateCounter {
-    to { transform: rotate(-360deg); }
-}
-
-@keyframes aperturePulse {
-    0%, 100% { transform: scale(1); opacity: 0.78; }
-    50% { transform: scale(0.86); opacity: 1; }
-}
-
-@keyframes eyeDriftLite {
-    0%,
-    100% { transform: translate3d(0, 0, 0); }
-    25% { transform: translate3d(0.8px, -0.6px, 0); }
-    50% { transform: translate3d(-1px, 0.7px, 0); }
-    75% { transform: translate3d(0.6px, 0.5px, 0); }
 }
 
 #curves .outer-eye {
@@ -1697,13 +1433,6 @@ button{
     width: 4em;
     margin-bottom: 25px;
 }
-.input-container {
-    margin-top: 50px;
-    margin-bottom: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
 .gallery-search {
     display: block;
     width: calc(80% * var(--site-entry-width-scale));
@@ -1712,7 +1441,7 @@ button{
     padding: 8px 12px;
     box-sizing: border-box;
     font-family: 'Orbitron', sans-serif;
-    font-size: 1em;
+    font-size: var(--site-type-p-size);
     height: auto;
     color: #D77907;
     background-color: #000;
@@ -1722,6 +1451,10 @@ button{
     outline: none;
     transition: box-shadow 0.3s;
   }
+
+.gallery-search::placeholder {
+    font-size: inherit;
+}
   
   .gallery-search:focus {
     box-shadow: 0 0 10px #D77907;
@@ -2087,10 +1820,6 @@ iframe {
 
     .gallery-flex img {
         max-height: none;
-    }
-
-    .gallery-flex-1 img {
-        height: clamp(263px, 70vh, 525px);
     }
 
     iframe {

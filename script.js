@@ -1663,7 +1663,6 @@
             if (linkedStatsWindow) {
                 const statsAnchor = traitFilterWindow || searchRow;
                 statsAnchor.insertAdjacentElement('beforebegin', linkedStatsWindow);
-                linkedStatsWindow.classList.remove('collection-stats-window--hero');
             }
         }
 
@@ -1954,6 +1953,5 @@
         const marketplaceLink = document.querySelector(`a[href*="/marketplace/${collectionSymbol}"]`);
         if (!statsWindow || !marketplaceLink) return;
         marketplaceLink.insertAdjacentElement('beforebegin', statsWindow);
-        statsWindow.classList.remove('collection-stats-window--hero');
     });
 });
