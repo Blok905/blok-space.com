@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Blok Space</title>
-    <link rel="stylesheet" href="styles.css?v=20260228-26">
+    <link rel="stylesheet" href="styles.css?v=20260228-27">
     <link rel="icon" href="/Images/Surveillance.png">
 </head>
 <body>
@@ -441,7 +441,7 @@
             const palindromeReferenceDurationSeconds = 31.2;
             const fallbackCarouselPixelsPerSecond = 180;
             const carouselSpeedScale = 0.8;
-            const eagerEnhancementViewportMultiplier = 1.45;
+            const eagerEnhancementViewportMultiplier = 1.9;
             const carouselSourcePreloadPerRow = 96;
             const carouselClonePreloadPerRow = 24;
             const carouselHighPriorityPerRow = 18;
@@ -456,6 +456,8 @@
             let sharedCarouselPixelsPerSecond = null;
             const hasIdleCallback = typeof window.requestIdleCallback === 'function';
             let carouselVisibilityObserver = null;
+            const boundCarouselGalleries = new Set();
+            let carouselPlaybackSyncQueued = false;
 
             function runWhenIdle(task, timeoutMs) {
                 if (hasIdleCallback) {
@@ -501,6 +503,51 @@
                 img.setAttribute('fetchpriority', highPriority ? 'high' : 'auto');
             }
 
+            function isGalleryWithinPlaybackRange(gallery) {
+                if (!gallery || typeof gallery.getBoundingClientRect !== 'function') return false;
+                const rect = gallery.getBoundingClientRect();
+                const viewportHeight = Math.max(
+                    window.innerHeight || 0,
+                    document.documentElement ? document.documentElement.clientHeight : 0,
+                    1
+                );
+                const viewportWidth = Math.max(
+                    window.innerWidth || 0,
+                    document.documentElement ? document.documentElement.clientWidth : 0,
+                    1
+                );
+                const verticalMargin = Math.min(320, Math.max(120, viewportHeight * 0.35));
+                return rect.bottom >= -verticalMargin
+                    && rect.top <= viewportHeight + verticalMargin
+                    && rect.right >= 0
+                    && rect.left <= viewportWidth;
+            }
+
+            function syncCarouselPlaybackState(gallery, observerEntry) {
+                if (!gallery || !gallery.classList) return;
+                const intersectsObserver = observerEntry ? Boolean(observerEntry.isIntersecting) : false;
+                const shouldAnimate = intersectsObserver || isGalleryWithinPlaybackRange(gallery);
+                gallery.classList.toggle('gallery-grid--carousel-active', shouldAnimate);
+            }
+
+            function queueCarouselPlaybackSync() {
+                if (carouselPlaybackSyncQueued) return;
+                carouselPlaybackSyncQueued = true;
+
+                const runSync = function() {
+                    carouselPlaybackSyncQueued = false;
+                    boundCarouselGalleries.forEach(function(gallery) {
+                        syncCarouselPlaybackState(gallery);
+                    });
+                };
+
+                if (typeof window.requestAnimationFrame === 'function') {
+                    window.requestAnimationFrame(runSync);
+                } else {
+                    window.setTimeout(runSync, 0);
+                }
+            }
+
             function getCarouselVisibilityObserver() {
                 if (carouselVisibilityObserver) return carouselVisibilityObserver;
                 if (typeof window.IntersectionObserver !== 'function') return null;
@@ -508,9 +555,7 @@
                 carouselVisibilityObserver = new IntersectionObserver(function(entries) {
                     entries.forEach(function(entry) {
                         const gallery = entry.target;
-                        if (!gallery || !gallery.classList) return;
-                        const shouldAnimate = entry.isIntersecting && entry.intersectionRatio > 0;
-                        gallery.classList.toggle('gallery-grid--carousel-active', shouldAnimate);
+                        syncCarouselPlaybackState(gallery, entry);
                     });
                 }, {
                     root: null,
@@ -525,12 +570,27 @@
                 if (!gallery || gallery.dataset.carouselVisibilityBound === 'true') return;
 
                 const observer = getCarouselVisibilityObserver();
+                syncCarouselPlaybackState(gallery);
                 if (observer) {
                     observer.observe(gallery);
                 } else {
                     gallery.classList.add('gallery-grid--carousel-active');
                 }
 
+                if (typeof window.requestAnimationFrame === 'function') {
+                    window.requestAnimationFrame(function() {
+                        syncCarouselPlaybackState(gallery);
+                    });
+                } else {
+                    window.setTimeout(function() {
+                        syncCarouselPlaybackState(gallery);
+                    }, 0);
+                }
+                window.setTimeout(function() {
+                    syncCarouselPlaybackState(gallery);
+                }, 120);
+
+                boundCarouselGalleries.add(gallery);
                 gallery.dataset.carouselVisibilityBound = 'true';
             }
 
@@ -1314,10 +1374,27 @@
                 });
             }
 
-            function enqueueGalleryEnhancement(gallery) {
-                if (!gallery || completedGallerySet.has(gallery) || queuedGallerySet.has(gallery)) return;
+            function enqueueGalleryEnhancement(gallery, prioritize) {
+                if (!gallery || completedGallerySet.has(gallery)) return;
+                const shouldPrioritize = Boolean(prioritize);
+
+                if (queuedGallerySet.has(gallery)) {
+                    if (shouldPrioritize) {
+                        const queuedIndex = galleryEnhancementQueue.indexOf(gallery);
+                        if (queuedIndex > 0) {
+                            galleryEnhancementQueue.splice(queuedIndex, 1);
+                            galleryEnhancementQueue.unshift(gallery);
+                        }
+                    }
+                    return;
+                }
+
                 queuedGallerySet.add(gallery);
-                galleryEnhancementQueue.push(gallery);
+                if (shouldPrioritize) {
+                    galleryEnhancementQueue.unshift(gallery);
+                } else {
+                    galleryEnhancementQueue.push(gallery);
+                }
                 processGalleryEnhancementQueue();
             }
 
@@ -1330,11 +1407,11 @@
                         if (!entry.isIntersecting) return;
                         observer.unobserve(entry.target);
                         observedGallerySet.delete(entry.target);
-                        enqueueGalleryEnhancement(entry.target);
+                        enqueueGalleryEnhancement(entry.target, true);
                     });
                 }, {
                     root: null,
-                    rootMargin: '700px 0px',
+                    rootMargin: '1200px 0px',
                     threshold: 0.01
                 });
 
@@ -1343,9 +1420,11 @@
 
             function scheduleGalleryEnhancement(gallery) {
                 if (!gallery || completedGallerySet.has(gallery)) return;
+                const symbol = String(gallery.dataset.collectionSymbol || '').trim().toLowerCase();
+                const shouldPrioritize = carouselSymbols.has(symbol);
 
                 if (isNearViewport(gallery, eagerEnhancementViewportMultiplier)) {
-                    enqueueGalleryEnhancement(gallery);
+                    enqueueGalleryEnhancement(gallery, true);
                     return;
                 }
 
@@ -1358,8 +1437,8 @@
                 }
 
                 runWhenIdle(function() {
-                    enqueueGalleryEnhancement(gallery);
-                }, 2200);
+                    enqueueGalleryEnhancement(gallery, shouldPrioritize);
+                }, shouldPrioritize ? 900 : 2200);
             }
 
             const artDropsGallery = document.querySelector('.gallery-flex');
@@ -1388,7 +1467,9 @@
             galleries.forEach(function(gallery) {
                 scheduleGalleryEnhancement(gallery);
             });
+            window.addEventListener('scroll', queueCarouselPlaybackSync, { passive: true });
             window.addEventListener('resize', function() {
+                queueCarouselPlaybackSync();
                 galleries.forEach(function(gallery) {
                     scheduleGalleryEnhancement(gallery);
                 });

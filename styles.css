@@ -1947,6 +1947,11 @@ iframe {
         --site-type-p-size: clamp(0.75em, calc(0.8vw + 0.55em), 1em);
     }
 
+    .collection-stats-grid {
+        --collection-stat-card-width: min(210px, calc((100% - 10px) / 2));
+        flex-wrap: wrap;
+    }
+
     main {
         padding: 14px 10px 72px;
     }
