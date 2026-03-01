@@ -360,6 +360,9 @@ p {
     flex-direction: column;
     align-items: center;
     width: min(100%, 1100px);
+    overflow: visible;
+    content-visibility: visible;
+    contain: none;
 }
 
 .wallet-result-title {
@@ -407,7 +410,7 @@ p {
     width: 520px;
     height: 520px;
     border: 0;
-    transform: scale(0.3962);
+    transform: scale(0.3731);
     transform-origin: top left;
     pointer-events: none;
     display: block;
@@ -757,6 +760,7 @@ footer p {
 
 .gallery-item-visual {
     position: relative;
+    --gallery-image-border-width: 6px;
 }
 
 .gallery-item > .gallery-item-visual {
@@ -814,9 +818,9 @@ footer p {
 
 .image-title {
     position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    left: var(--gallery-image-border-width);
+    right: var(--gallery-image-border-width);
+    bottom: var(--gallery-image-border-width);
     padding: 4px 6px;
     font-size: 0.78em;
     font-weight: 700;
@@ -1669,7 +1673,7 @@ iframe {
     }
 
     .wallet-blokchain-frame {
-        transform: scale(0.3615);
+        transform: scale(0.3385);
     }
 
     .gallery-item:hover,
@@ -1743,7 +1747,7 @@ iframe {
     }
 
     .wallet-blokchain-frame {
-        transform: scale(0.3173);
+        transform: scale(0.2942);
     }
 
     .gallery-item:hover,
@@ -1809,7 +1813,7 @@ iframe {
     }
 
     .wallet-blokchain-frame {
-        transform: scale(0.2846);
+        transform: scale(0.2615);
     }
 
     .gallery-item:hover,
