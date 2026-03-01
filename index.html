@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Blok Space</title>
-    <link rel="stylesheet" href="styles.css?v=20260228-27">
+    <link rel="stylesheet" href="styles.css?v=20260228-28">
     <link rel="icon" href="/Images/Surveillance.png">
 </head>
 <body>
@@ -1588,6 +1588,10 @@
                 ? window.performance.now()
                 : Date.now();
             var startupPhaseComplete = false;
+            var layoutSyncFrameId = 0;
+            var layoutSyncTimeoutId = 0;
+            var boundsResizeObserver = null;
+            var boundsMutationObserver = null;
 
             function rand(min, max) {
                 return min + Math.random() * (max - min);
@@ -1845,6 +1849,23 @@
                 });
             }
 
+            function scheduleBoundsRebuild() {
+                if (layoutSyncFrameId || layoutSyncTimeoutId) return;
+
+                var runSync = function() {
+                    layoutSyncFrameId = 0;
+                    layoutSyncTimeoutId = 0;
+                    rebuildBounds();
+                };
+
+                if (typeof window.requestAnimationFrame === 'function') {
+                    layoutSyncFrameId = window.requestAnimationFrame(runSync);
+                    return;
+                }
+
+                layoutSyncTimeoutId = window.setTimeout(runSync, 0);
+            }
+
             function tick(time) {
                 if (!startupPhaseComplete && !isStartupPhase(time)) {
                     startupPhaseComplete = true;
@@ -1914,7 +1935,38 @@
 
             function onResize() {
                 window.clearTimeout(resizeTimer);
-                resizeTimer = window.setTimeout(rebuildBounds, 120);
+                resizeTimer = window.setTimeout(scheduleBoundsRebuild, 120);
+            }
+
+            function bindDynamicBoundsWatchers() {
+                if (typeof window.ResizeObserver === 'function' && !boundsResizeObserver) {
+                    boundsResizeObserver = new ResizeObserver(function() {
+                        scheduleBoundsRebuild();
+                    });
+
+                    [
+                        document.documentElement,
+                        document.body,
+                        document.querySelector('main'),
+                        document.querySelector('footer')
+                    ].forEach(function(node) {
+                        if (!node) return;
+                        boundsResizeObserver.observe(node);
+                    });
+                }
+
+                if (typeof window.MutationObserver === 'function' && !boundsMutationObserver) {
+                    var mainElement = document.querySelector('main');
+                    if (mainElement) {
+                        boundsMutationObserver = new MutationObserver(function() {
+                            scheduleBoundsRebuild();
+                        });
+                        boundsMutationObserver.observe(mainElement, {
+                            childList: true,
+                            subtree: true
+                        });
+                    }
+                }
             }
 
             if (motionQuery) {
@@ -1944,8 +1996,9 @@
             window.addEventListener('resize', onResize);
             document.addEventListener('visibilitychange', applyMotionPreference);
             window.addEventListener('pagehide', stop, { once: true });
-            window.addEventListener('load', rebuildBounds, { once: true });
+            window.addEventListener('load', scheduleBoundsRebuild, { once: true });
 
+            bindDynamicBoundsWatchers();
             rebuildBounds();
             applyMotionPreference();
         })();
