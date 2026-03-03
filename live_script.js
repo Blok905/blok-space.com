@@ -20,7 +20,7 @@ function seedLargeCollectionGrid(symbol, folderPath, labelPrefix, totalItems) {
         img.loading = 'lazy';
         img.decoding = 'async';
         img.setAttribute('fetchpriority', 'low');
-        img.src = `${folderPath}${i}.png`;
+        img.src = `${folderPath}${i}.webp`;
         img.alt = `${labelPrefix}${i}`;
         fragment.appendChild(img);
     }
@@ -78,7 +78,7 @@ document.addEventListener("DOMContentLoaded", function() {
             symbol: 'blokchain-surveillance',
             name: 'Blokchain Surveillance',
             metadataPath: './blokchain-surveillance-metadata.json',
-            fallbackImageSrc: './Images/Surveillance.png',
+            fallbackImageSrc: './Images/Surveillance.webp',
             fallbackImageAlt: 'Blokchain Surveillance'
         },
         {
@@ -89,7 +89,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     ];
     const magicEdenItemBaseUrl = 'https://magiceden.io/ordinals/item-details/';
-    const magicEdenIconPath = './Images/ME.png';
+    const magicEdenIconPath = './Images/ME.webp';
 
     function sanitizeOrdNodeBase(value) {
         const trimmed = String(value || '').trim();
@@ -793,14 +793,14 @@ document.addEventListener("DOMContentLoaded", function() {
 
             if (collection.symbol === 'blok-boyz') {
                 return {
-                    src: `./Blok Boyz/${editionNumber}.png`,
+                    src: `./Blok Boyz/${editionNumber}.webp`,
                     alt: `Blok Boyz #${editionNumber}`
                 };
             }
 
             if (collection.symbol === 'blok-space') {
                 return {
-                    src: `./Blok Space/${editionNumber}.png`,
+                    src: `./Blok Space/${editionNumber}.webp`,
                     alt: `Blok Space #${editionNumber}`
                 };
             }

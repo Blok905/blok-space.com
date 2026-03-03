@@ -1,4 +1,13 @@
-function seedLargeCollectionGrid(symbol, folderPath, labelPrefix, totalItems) {
+function applyImageLoadingStrategy(img, shouldPreload) {
+    if (!img || img.tagName !== 'IMG') return;
+
+    img.dataset.preloadPriority = shouldPreload ? 'high' : 'low';
+    img.loading = shouldPreload ? 'eager' : 'lazy';
+    img.decoding = 'async';
+    img.setAttribute('fetchpriority', shouldPreload ? 'high' : 'low');
+}
+
+function seedLargeCollectionGrid(symbol, folderPath, labelPrefix, totalItems, totalPreloadItems) {
     const normalizedSymbol = String(symbol || '').trim().toLowerCase();
     if (!normalizedSymbol) return;
 
@@ -14,13 +23,13 @@ function seedLargeCollectionGrid(symbol, folderPath, labelPrefix, totalItems) {
 
     const fragment = document.createDocumentFragment();
     const safeTotal = Math.max(0, Number(totalItems) || 0);
+    const safePreloadCount = Math.max(0, Math.min(safeTotal, Number(totalPreloadItems) || 0));
 
     for (let i = 1; i <= safeTotal; i += 1) {
         const img = document.createElement('img');
-        img.loading = 'lazy';
-        img.decoding = 'async';
-        img.setAttribute('fetchpriority', 'low');
-        img.src = `${folderPath}${i}.png`;
+        const shouldPreload = i <= safePreloadCount;
+        applyImageLoadingStrategy(img, shouldPreload);
+        img.src = `${folderPath}${i}.webp`;
         img.alt = `${labelPrefix}${i}`;
         fragment.appendChild(img);
     }
@@ -31,8 +40,8 @@ function seedLargeCollectionGrid(symbol, folderPath, labelPrefix, totalItems) {
 
 (function bootstrapGeneratedCollectionGrids() {
     function runSeeders() {
-        seedLargeCollectionGrid('blok-boyz', './Blok Boyz/', 'Blok Boyz #', 1000);
-        seedLargeCollectionGrid('blok-space', './Blok Space/', 'Blok Space #', 1000);
+        seedLargeCollectionGrid('blok-boyz', './Blok Boyz/', 'Blok Boyz #', 1000, 100);
+        seedLargeCollectionGrid('blok-space', './Blok Space/', 'Blok Space #', 1000, 100);
     }
 
     if (document.readyState === 'loading') {
@@ -78,7 +87,7 @@ document.addEventListener("DOMContentLoaded", function() {
             symbol: 'blokchain-surveillance',
             name: 'Blokchain Surveillance',
             metadataPath: './blokchain-surveillance-metadata.json',
-            fallbackImageSrc: './Images/Surveillance.png',
+            fallbackImageSrc: './Images/Surveillance.webp',
             fallbackImageAlt: 'Blokchain Surveillance'
         },
         {
@@ -90,7 +99,7 @@ document.addEventListener("DOMContentLoaded", function() {
     ];
     const magicEdenItemBaseUrl = 'https://magiceden.io/ordinals/item-details/';
     const magicEdenMarketplaceBaseUrl = 'https://magiceden.io/ordinals/marketplace/';
-    const magicEdenIconPath = './Images/ME.png';
+    const magicEdenIconPath = './Images/ME.webp';
 
     function sanitizeOrdNodeBase(value) {
         const trimmed = String(value || '').trim();
@@ -911,14 +920,14 @@ document.addEventListener("DOMContentLoaded", function() {
 
             if (collection.symbol === 'blok-boyz') {
                 return {
-                    src: `./Blok Boyz/${editionNumber}.png`,
+                    src: `./Blok Boyz/${editionNumber}.webp`,
                     alt: `Blok Boyz #${editionNumber}`
                 };
             }
 
             if (collection.symbol === 'blok-space') {
                 return {
-                    src: `./Blok Space/${editionNumber}.png`,
+                    src: `./Blok Space/${editionNumber}.webp`,
                     alt: `Blok Space #${editionNumber}`
                 };
             }
@@ -1646,9 +1655,14 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     const carouselCollectionSymbols = new Set(['palindrome-punks', 'blok-boyz', 'blok-space']);
+    const fullPreloadCollectionSymbols = new Set(['palindrome-punks']);
+    const preloadCountByCollectionSymbol = new Map([
+        ['blok-boyz', 100],
+        ['blok-space', 100]
+    ]);
     const carouselRowCount = 3;
     const fallbackCarouselPixelsPerSecond = 180;
-    const carouselSpeedScale = 0.8;
+    const carouselSpeedScale = 0.4;
     const palindromeReferenceDurationSeconds = 31.2;
     let sharedCarouselPixelsPerSecond = null;
     const galleryMetadataIndexPromiseBySymbol = new Map();
@@ -1675,6 +1689,17 @@ document.addEventListener("DOMContentLoaded", function() {
         } catch (error) {
             return sourceStem;
         }
+    }
+
+    function shouldPreloadCollectionImage(collectionSymbol, imageIndex) {
+        const normalizedCollectionSymbol = String(collectionSymbol || '').trim().toLowerCase();
+        if (!normalizedCollectionSymbol) return false;
+        if (fullPreloadCollectionSymbols.has(normalizedCollectionSymbol)) return true;
+
+        const configuredPreloadCount = Number(preloadCountByCollectionSymbol.get(normalizedCollectionSymbol) || 0);
+        if (!Number.isFinite(configuredPreloadCount) || configuredPreloadCount <= 0) return false;
+
+        return imageIndex < configuredPreloadCount;
     }
 
     function ensureGalleryItemStructure(img, collectionSymbol) {
@@ -1716,9 +1741,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
         galleryItem.dataset.carouselClone = galleryItem.dataset.carouselClone === 'true' ? 'true' : 'false';
 
-        img.loading = 'lazy';
-        img.decoding = 'async';
-        if (!img.hasAttribute('fetchpriority')) img.setAttribute('fetchpriority', 'low');
+        applyImageLoadingStrategy(img, String(img.dataset.preloadPriority || '').toLowerCase() === 'high');
 
         const downloadButton = visualNode.querySelector('.download-button') || document.createElement('button');
         if (!downloadButton.classList.contains('download-button')) {
@@ -1873,6 +1896,8 @@ document.addEventListener("DOMContentLoaded", function() {
         if (!sourceItem) return null;
         const clone = sourceItem.cloneNode(true);
         clone.dataset.carouselClone = 'true';
+        const cloneImage = clone.querySelector('img');
+        if (cloneImage) applyImageLoadingStrategy(cloneImage, false);
         return clone;
     }
 
@@ -2059,6 +2084,11 @@ document.addEventListener("DOMContentLoaded", function() {
         });
 
         if (sourceItems.length === 0) return;
+        sourceItems.forEach((item, itemIndex) => {
+            const image = item.querySelector('img');
+            if (!image) return;
+            applyImageLoadingStrategy(image, shouldPreloadCollectionImage(gridSymbol, itemIndex));
+        });
         rebuildCollectionGridLayout(grid, sourceItems, gridSymbol);
         void hydrateGalleryMagicEdenLinks(grid, gridSymbol);
     }
