@@ -1478,7 +1478,7 @@ document.addEventListener("DOMContentLoaded", function() {
         if (!grid || !normalizedSymbol) return;
 
         const metadataIndex = await loadGalleryMetadataIndex(normalizedSymbol);
-        const galleryItems = Array.from(grid.querySelectorAll('.gallery-item')).filter(item => item.dataset.carouselClone !== 'true');
+        const galleryItems = Array.from(grid.querySelectorAll('.gallery-item'));
         galleryItems.forEach(item => {
             const img = item.querySelector('img');
             if (!img) return;
