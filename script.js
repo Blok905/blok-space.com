@@ -55,32 +55,32 @@ document.addEventListener("DOMContentLoaded", function() {
         {
             symbol: 'palindrome-punks',
             name: 'Palindrome Punks',
-            metadataPath: './palindrome-punks-metadata.json',
+            metadataPath: './Metadata/palindrome-punks-metadata.json',
             imageSelector: '.gallery-grid[data-collection-symbol="palindrome-punks"] img'
         },
         {
             symbol: 'blok-boyz',
             name: 'Blok Boyz',
-            metadataPath: './blok-boyz-metadata.json',
+            metadataPath: './Metadata/blok-boyz-metadata.json',
             imageSelector: '.gallery-grid[data-collection-symbol="blok-boyz"] img'
         },
         {
             symbol: 'blok-space',
             name: 'Blok Space',
-            metadataPath: './blok-space-metadata.json',
+            metadataPath: './Metadata/blok-space-metadata.json',
             imageSelector: '.gallery-grid[data-collection-symbol="blok-space"] img'
         },
         {
             symbol: 'blokchain-surveillance',
             name: 'Blokchain Surveillance',
-            metadataPath: './blokchain-surveillance-metadata.json',
+            metadataPath: './Metadata/blokchain-surveillance-metadata.json',
             fallbackImageSrc: './Images/Surveillance.webp',
             fallbackImageAlt: 'Blokchain Surveillance'
         },
         {
             symbol: 'art-drops',
             name: 'Art-Drops',
-            metadataPath: './art-drops-metadata.json',
+            metadataPath: './Metadata/art-drops-metadata.json',
             imageSelector: '.gallery-flex img'
         }
     ];
