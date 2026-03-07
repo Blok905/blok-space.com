@@ -7,6 +7,23 @@ function applyImageLoadingStrategy(img, shouldPreload) {
     img.setAttribute('fetchpriority', shouldPreload ? 'high' : 'low');
 }
 
+const collectionPreloadCountBySymbol = new Map([
+    ['blok-boyz', 160],
+    ['blok-space', 160]
+]);
+
+function getCollectionPreloadCount(symbol, fallbackCount = 0) {
+    const normalizedSymbol = String(symbol || '').trim().toLowerCase();
+    if (!normalizedSymbol) return Math.max(0, Number(fallbackCount) || 0);
+
+    const configuredCount = Number(collectionPreloadCountBySymbol.get(normalizedSymbol));
+    if (Number.isFinite(configuredCount) && configuredCount > 0) {
+        return configuredCount;
+    }
+
+    return Math.max(0, Number(fallbackCount) || 0);
+}
+
 function seedLargeCollectionGrid(symbol, folderPath, labelPrefix, totalItems, totalPreloadItems) {
     const normalizedSymbol = String(symbol || '').trim().toLowerCase();
     if (!normalizedSymbol) return;
@@ -23,7 +40,7 @@ function seedLargeCollectionGrid(symbol, folderPath, labelPrefix, totalItems, to
 
     const fragment = document.createDocumentFragment();
     const safeTotal = Math.max(0, Number(totalItems) || 0);
-    const safePreloadCount = Math.max(0, Math.min(safeTotal, Number(totalPreloadItems) || 0));
+    const safePreloadCount = Math.max(0, Math.min(safeTotal, getCollectionPreloadCount(normalizedSymbol, totalPreloadItems)));
 
     for (let i = 1; i <= safeTotal; i += 1) {
         const img = document.createElement('img');
@@ -40,8 +57,8 @@ function seedLargeCollectionGrid(symbol, folderPath, labelPrefix, totalItems, to
 
 (function bootstrapGeneratedCollectionGrids() {
     function runSeeders() {
-        seedLargeCollectionGrid('blok-boyz', './Blok Boyz/', 'Blok Boyz #', 1000, 100);
-        seedLargeCollectionGrid('blok-space', './Blok Space/', 'Blok Space #', 1000, 100);
+        seedLargeCollectionGrid('blok-boyz', './Blok Boyz/', 'Blok Boyz #', 1000, 160);
+        seedLargeCollectionGrid('blok-space', './Blok Space/', 'Blok Space #', 1000, 160);
     }
 
     if (document.readyState === 'loading') {
@@ -1269,10 +1286,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     const carouselCollectionSymbols = new Set(['palindrome-punks', 'blok-boyz', 'blok-space']);
     const fullPreloadCollectionSymbols = new Set(['palindrome-punks']);
-    const preloadCountByCollectionSymbol = new Map([
-        ['blok-boyz', 100],
-        ['blok-space', 100]
-    ]);
+    const preloadCountByCollectionSymbol = collectionPreloadCountBySymbol;
     const carouselRowCount = 3;
     const fallbackCarouselPixelsPerSecond = 180;
     const carouselSpeedScale = 0.4;
