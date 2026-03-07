@@ -33,7 +33,7 @@ body {
     text-align: center;
 }
 .grid-background {
-    --tron-cell: 20px;
+    --grid-cell-size: 20px;
     position: absolute;
     top: 0;
     left: 0;
@@ -59,8 +59,8 @@ body {
         rgba(0, 0, 0, 0.98) 100%
     );
     background-size:
-        var(--tron-cell) var(--tron-cell),
-        var(--tron-cell) var(--tron-cell),
+        var(--grid-cell-size) var(--grid-cell-size),
+        var(--grid-cell-size) var(--grid-cell-size),
         100% 100%;
     background-repeat: repeat, repeat, no-repeat;
     z-index: -1;
@@ -71,86 +71,6 @@ body {
     content: none;
 }
 
-.grid-node-layer {
-    position: absolute;
-    inset: 0;
-    overflow: hidden;
-    pointer-events: none;
-    z-index: 1;
-}
-
-.grid-tron-node {
-    position: absolute;
-    width: 0;
-    height: 0;
-    pointer-events: none;
-    will-change: transform;
-}
-
-.grid-tron-node::before,
-.grid-tron-node::after {
-    content: '';
-    position: absolute;
-    pointer-events: none;
-}
-
-.grid-tron-node::before {
-    opacity: 0.9;
-    z-index: 1;
-}
-
-.grid-tron-node::after {
-    left: 0;
-    top: 0;
-    width: var(--node-size, 4px);
-    height: var(--node-size, 4px);
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    background: hsl(var(--node-hue, 196) 100% 84% / var(--node-alpha, 0.86));
-    box-shadow:
-        0 0 10px hsl(var(--node-hue, 196) 100% 78% / 0.92),
-        0 0 22px hsl(var(--node-hue, 196) 100% 70% / 0.62);
-    z-index: 2;
-}
-
-.grid-tron-node.axis-x.dir-pos::before {
-    top: 0;
-    left: calc(-1 * var(--trail, 48px));
-    width: var(--trail, 48px);
-    height: 1px;
-    background: linear-gradient(90deg, rgba(112, 224, 255, 0), rgba(166, 244, 255, 0.98));
-    box-shadow: 0 0 10px rgba(136, 240, 255, 0.9), 0 0 22px rgba(74, 214, 255, 0.66);
-}
-
-.grid-tron-node.axis-x.dir-neg::before {
-    top: 0;
-    left: 0;
-    width: var(--trail, 48px);
-    height: 1px;
-    background: linear-gradient(90deg, rgba(166, 244, 255, 0.98), rgba(112, 224, 255, 0));
-    box-shadow: 0 0 10px rgba(136, 240, 255, 0.9), 0 0 22px rgba(74, 214, 255, 0.66);
-}
-
-.grid-tron-node.axis-y.dir-pos::before {
-    left: 0;
-    top: calc(-1 * var(--trail, 48px));
-    width: 1px;
-    height: var(--trail, 48px);
-    background: linear-gradient(180deg, rgba(112, 224, 255, 0), rgba(166, 244, 255, 0.98));
-    box-shadow: 0 0 10px rgba(136, 240, 255, 0.9), 0 0 22px rgba(74, 214, 255, 0.66);
-}
-
-.grid-tron-node.axis-y.dir-neg::before {
-    left: 0;
-    top: 0;
-    width: 1px;
-    height: var(--trail, 48px);
-    background: linear-gradient(180deg, rgba(166, 244, 255, 0.98), rgba(112, 224, 255, 0));
-    box-shadow: 0 0 10px rgba(136, 240, 255, 0.9), 0 0 22px rgba(74, 214, 255, 0.66);
-}
-li{
-    list-style: square;
-}
 header {
     background-color: rgba(26, 26, 26, 0.8);
     padding: 20px;
@@ -427,14 +347,6 @@ p {
     text-align: center;
 }
 
-.collection-stats-top {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-
 .collection-stats-updated {
     margin: 0;
     font-size: var(--site-type-p-size);
@@ -492,7 +404,7 @@ p {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 8px;
+    gap: 12px;
     flex-wrap: nowrap;
     align-items: center;
     font-size: var(--site-type-p-size);
@@ -512,16 +424,7 @@ p {
     color: #ff6b6b;
 }
 
-.collection-stats-refresh {
-    display: none;
-}
-
-.collection-stats-refresh:disabled {
-    opacity: 0.7;
-    cursor: wait;
-}
-
-/* Force collection/trait copy plus wallet result titles to match paragraph typography exactly. */
+/* Force collection/trait copy to match paragraph typography exactly. */
 .wallet-result-title,
 .collection-stats-updated,
 .collection-stat-label,
@@ -533,22 +436,17 @@ p {
 .trait-filter-status {
     font-family: 'Orbitron', sans-serif !important;
     font-size: var(--site-type-p-size) !important;
-    font-weight: 700 !important;
     letter-spacing: 0 !important;
     line-height: 1 !important;
-}
-
-/* Wallet search UI text should stay regular weight. */
-.wallet-search-label,
-.wallet-search-input,
-.wallet-search-status {
-    font-weight: 400 !important;
 }
 
 /* Keep traits + non-result collection stats non-bold. */
 .collection-stats-updated,
 .collection-stat-label,
 .collection-stats-status,
+.wallet-search-label,
+.wallet-search-input,
+.wallet-search-status,
 .trait-filter-toggle,
 .trait-filter-label,
 .trait-filter-select,
@@ -559,41 +457,6 @@ p {
 /* Collection stats results stay bold. */
 .collection-stat-value {
     font-weight: 700 !important;
-}
-
-nav ul {
-    list-style: none;
-    padding: 0;
-}
-
-nav ul li {
-    display: inline;
-    margin: 0 10px;
-}
-
-nav ul li a {
-    color: #D77907;
-    text-decoration: none;
-    font-weight: bold;
-    position: relative;
-}
-
-nav ul li a::after {
-    content: '';
-    position: absolute;
-    width: 100%;
-    transform: scaleX(0);
-    height: 2px;
-    bottom: 0;
-    left: 0;
-    background-color: #D77907;
-    transform-origin: bottom right;
-    transition: transform 0.25s ease-out;
-}
-
-nav ul li a:hover::after {
-    transform: scaleX(1);
-    transform-origin: bottom left;
 }
 
 main {
@@ -856,7 +719,7 @@ footer p {
     outline-offset: 2px;
 }
 
-.item-magic-eden-link {
+.item-market-link {
     position: absolute;
     left: 6px;
     top: 6px;
@@ -875,16 +738,16 @@ footer p {
     z-index: 2;
 }
 
-.gallery-item:hover .item-magic-eden-link,
-.gallery-item:focus-within .item-magic-eden-link,
-.gallery-flex-item:hover .item-magic-eden-link,
-.gallery-flex-item:focus-within .item-magic-eden-link {
+.gallery-item:hover .item-market-link,
+.gallery-item:focus-within .item-market-link,
+.gallery-flex-item:hover .item-market-link,
+.gallery-flex-item:focus-within .item-market-link {
     opacity: 1;
     visibility: visible;
 }
 
-.item-magic-eden-link:hover,
-.item-magic-eden-link:focus-visible {
+.item-market-link:hover,
+.item-market-link:focus-visible {
     opacity: 1;
     visibility: visible;
     border-color: #f7931a;
@@ -1428,13 +1291,6 @@ button{
     border-radius: 0.5em;
     background-color: #D77907;
 }
-.ME{
-    width: 4em;
-}
-.ME-alt{
-    width: 4em;
-    margin-bottom: 25px;
-}
 .gallery-search {
     display: block;
     width: calc(80% * var(--site-entry-width-scale));
@@ -1462,11 +1318,9 @@ button{
     box-shadow: 0 0 10px #D77907;
   }
 .gallery-search-row {
-    display: grid;
-    grid-template-columns: 56px minmax(180px, 270px) 56px;
+    display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
     width: 100%;
     margin: 0 auto 1em;
 }
@@ -1477,28 +1331,10 @@ button{
     justify-content: center;
 }
 
-.gallery-search-slot--left a {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
 .gallery-search-row .gallery-search {
     margin: 0;
     width: 100%;
-    max-width: none;
-}
-
-.gallery-search-row .ME,
-.gallery-search-row .ME-alt {
-    width: 3em;
-    margin-bottom: 0;
-    padding-bottom: 0;
-    flex: 0 0 auto;
-}
-
-.gallery-search-slot--right {
-    visibility: hidden;
+    max-width: 270px;
 }
 
 .trait-filter-window {
@@ -1724,8 +1560,6 @@ iframe {
     }
 
     .gallery-search-row {
-        grid-template-columns: 48px minmax(0, 240px) 48px;
-        gap: 6px;
         max-width: 100%;
     }
 
@@ -1777,22 +1611,16 @@ iframe {
     }
 
     .gallery-search-row {
-        grid-template-columns: 44px minmax(0, 228px) 44px;
         justify-items: center;
-        gap: 6px;
     }
 
     .gallery-search-slot {
         width: 100%;
     }
 
-    .gallery-search-slot--right {
-        display: flex;
-        visibility: hidden;
-    }
-
     .gallery-search-row .gallery-search {
         width: 100%;
+        max-width: 228px;
     }
 
     .gallery-grid {
@@ -1845,10 +1673,6 @@ iframe {
 @media (prefers-reduced-motion: reduce) {
     .grid-background {
         animation: none;
-    }
-
-    .grid-node-layer {
-        display: none;
     }
 
     .gallery-grid--carousel .gallery-carousel-track {
